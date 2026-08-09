@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kleos — Daily huddle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08090A;--panel:#111214;--panel-2:#17181B;--raised:#1C1D20;--line:rgba(255,255,255,.08);
+  --ink:#F7F8F8;--ink-2:#8A8F98;--ink-3:#62666D;--bronze:#D4A853;--bronze-dim:rgba(212,168,83,.4);
+  --red:#EB5757;--amber:#F2994A;--green:#4CB782;
+  --sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;
+  background:radial-gradient(ellipse 1000px 600px at 50% -12%, rgba(212,168,83,.07), transparent 60%), var(--bg);min-height:100%;
+  -webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;transition:all .15s var(--ease)}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.topbar{display:flex;align-items:center;padding:14px 26px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;letter-spacing:-.01em}
+.brand em{font-style:normal}
+.mark{width:22px;height:22px;border-radius:6px;background:var(--bronze);display:flex;align-items:center;justify-content:center;
+  color:#15100A;font-weight:700;font-size:11px}
+.spacer{flex:1}
+.back{background:var(--raised);color:var(--ink-2);padding:7px 12px;border-radius:7px;font-size:12px;text-decoration:none;border:1px solid var(--line)}
+.back:hover{background:var(--panel-2);color:var(--ink);border-color:var(--bronze-dim)}
+.wrap{max-width:760px;margin:0 auto;padding:44px 24px 90px;animation:fadeInUp .4s var(--ease)}
+h1{font-size:24px;font-weight:600;text-align:center;margin-bottom:6px;letter-spacing:-.01em}
+.sub{text-align:center;color:var(--ink-2);font-size:12.5px;margin-bottom:32px;font-family:var(--mono);letter-spacing:.03em}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:28px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 10px;text-align:center;transition:border-color .18s var(--ease),background .18s var(--ease)}
+.tile.speaking{border-color:var(--bronze);background:rgba(212,168,83,.08);box-shadow:0 0 0 3px rgba(212,168,83,.08)}
+.tile.done{opacity:.5}
+.avatar{width:44px;height:44px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-weight:700;font-size:14px;color:#08090A}
+.tile b{display:block;font-size:12px;margin-bottom:2px;font-weight:500}
+.tile span{font-size:10.5px;color:var(--ink-3);font-family:var(--mono)}
+.mic-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--bronze);margin-left:4px;
+  animation:pulse 1s infinite ease-in-out}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;margin-bottom:16px}
+.transcript{max-height:280px;overflow-y:auto;margin-bottom:4px}
+.line{margin-bottom:14px;font-size:13.5px;line-height:1.55;animation:fadeInUp .3s var(--ease)}
+.line:last-child{margin-bottom:0}
+.line b{color:var(--bronze);margin-right:6px;font-weight:600}
+.line.user b{color:#7FE0AB}
+.line.sys{color:var(--ink-3);font-family:var(--mono);font-size:12px}
+textarea{width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:11px 12px;color:var(--ink);
+  font-family:inherit;font-size:13.5px;resize:vertical;min-height:80px;outline:none;margin-bottom:12px;transition:border-color .15s var(--ease),box-shadow .15s var(--ease)}
+textarea:focus{border-color:var(--bronze);box-shadow:0 0 0 3px rgba(212,168,83,.14)}
+.btn{padding:12px 20px;border-radius:8px;background:var(--bronze);color:#15100A;font-weight:600;font-size:13.5px}
+.btn:hover{background:#E2BA6C;transform:translateY(-1px);box-shadow:0 6px 16px rgba(212,168,83,.22)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.btn.ghost{background:var(--raised);color:var(--ink-2);font-weight:500;border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--panel-2);color:var(--ink);box-shadow:none;transform:none}
+.btn.rec{background:var(--red);color:#fff}
+.btn.rec:hover{background:#F26D6D;box-shadow:0 6px 16px rgba(235,87,87,.25)}
+.row{display:flex;gap:10px;align-items:center}
+.center{display:flex;justify-content:center}
+.muted{color:var(--ink-3);font-size:13px;text-align:center;padding:30px 0}
+.note{background:rgba(212,168,83,.1);border:1px solid rgba(212,168,83,.3);color:var(--bronze);font-size:12.5px;
+  padding:9px 11px;border-radius:8px;margin-bottom:16px}
+.err{background:rgba(235,87,87,.1);border:1px solid rgba(235,87,87,.3);color:#FF9B9B;font-size:12.5px;
+  padding:9px 11px;border-radius:8px;margin-bottom:16px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand"><div class="mark">K</div>Kleos</div>
+  <div class="spacer"></div>
+  <a class="back" href="/index.html">Back to workspace</a>
+</div>
+
+<div class="wrap">
+  <div id="loading" class="muted">Loading…</div>
+
+  <div id="not-huddle-day" class="hidden">
+    <h1>No huddle today</h1>
+    <p class="sub" style="margin-bottom:0">The team huddles a few times a week, not every day — check back on the next one.</p>
+  </div>
+
+  <div id="huddle-body" class="hidden">
+    <h1>Daily huddle</h1>
+    <p class="sub" id="sub-line"></p>
+
+    <div class="tiles" id="tiles"></div>
+
+    <div class="card">
+      <div class="transcript" id="transcript"></div>
+    </div>
+
+    <div class="card hidden" id="turn-card">
+      <div class="row" style="margin-bottom:14px;justify-content:space-between">
+        <b style="font-size:13px">Your turn</b>
+        <span class="muted" style="padding:0" id="turn-hint"></span>
+      </div>
+
+      <div id="mic-consent" class="hidden" style="margin-bottom:14px">
+        <p class="muted" style="padding:0 0 14px;text-align:left">
+          Clicking "Continue with voice" will ask your browser for microphone access.
+          Your recording is sent to OpenAI (Whisper) to transcribe it into text, then
+          discarded — Kleos doesn't store the audio itself, only the transcript you
+          confirm below. You can type your update instead if you'd rather skip this.
+        </p>
+        <div class="row">
+          <button class="btn" id="btn-consent-voice">🎙 Continue with voice</button>
+          <button class="btn ghost" id="btn-consent-type">Type instead</button>
+        </div>
+      </div>
+
+      <div id="mic-ui" class="hidden">
+        <div class="center" style="margin-bottom:14px">
+          <button class="btn rec" id="btn-record">● Start recording</button>
+        </div>
+        <div id="rec-status" class="muted hidden" style="padding:0 0 14px"></div>
+      </div>
+
+      <textarea id="update-text" placeholder="Say (or type) what you're working on, any blockers, anything the team should know…" class="hidden"></textarea>
+      <div class="row">
+        <button class="btn hidden" id="btn-submit" disabled>Send update</button>
+        <button class="btn ghost hidden" id="btn-type-instead">Type instead</button>
+      </div>
+      <div class="err hidden" id="turn-err"></div>
+    </div>
+
+    <div class="card hidden" id="done-card">
+      <p class="muted" style="padding:0">You've given today's update. See you at the next huddle.</p>
+    </div>
+  </div>
+
+  <div id="error" class="err hidden"></div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+
+const AGENT_META = {
+  pm:         { color: '#4D8DF0', initials: 'YK' },
+  tlead:      { color: '#9B7BE8', initials: 'DR' },
+  qa:         { color: '#30A46C', initials: 'SN' },
+  stake:      { color: '#E5484D', initials: 'OF' },
+  ceo:        { color: '#F2C14E', initials: 'RA' },
+  cto:        { color: '#5EB1BF', initials: 'NR' },
+  dirproduct: { color: '#C77DFF', initials: 'CB' },
+  design:     { color: '#E0A458', initials: 'ES' },
+  marketing:  { color: '#F76C6C', initials: 'GM' },
+  sales:      { color: '#6FCF97', initials: 'RC' },
+  sys:        { color: '#68738A', initials: 'KL' },
+  user:       { color: '#7FD8A6', initials: 'ME' }
+};
+
+let audioCtxUnlocked = false;
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordedMimeType = 'audio/webm';
+
+function csrfToken() {
+  const m = document.cookie.match(/(?:^|; )kleos\.csrf=([^;]*)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
+async function api(url, opts) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (opts && opts.method && opts.method !== 'GET') headers['X-CSRF-Token'] = csrfToken();
+  const res = await fetch(url, { headers, ...opts });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+function nameFor(key) {
+  return AGENT_NAMES[key] || (key === 'user' ? 'You' : key === 'sys' ? 'System' : key);
+}
+
+let AGENT_NAMES = {};
+
+function renderTiles(attendees, speakingKey, spokenKeys) {
+  $('#tiles').innerHTML = attendees.map(key => {
+    const meta = AGENT_META[key] || { color: '#68738A', initials: '??' };
+    const isSpeaking = key === speakingKey;
+    const isDone = spokenKeys.has(key) && !isSpeaking;
+    return `<div class="tile ${isSpeaking ? 'speaking' : ''} ${isDone ? 'done' : ''}">
+      <div class="avatar" style="background:${meta.color}">${meta.initials}</div>
+      <b>${nameFor(key)}${isSpeaking ? '<span class=\"mic-dot\"></span>' : ''}</b>
+      <span>${isSpeaking ? 'speaking…' : isDone ? 'done' : 'waiting'}</span>
+    </div>`;
+  }).join('');
+}
+
+function appendLine(agentKey, text) {
+  const el = document.createElement('div');
+  const cls = agentKey === 'sys' ? 'line sys' : agentKey === 'user' ? 'line user' : 'line';
+  el.className = cls;
+  if (agentKey === 'sys') {
+    el.innerHTML = text;
+  } else {
+    el.innerHTML = `<b>${nameFor(agentKey)}</b>${text}`;
+  }
+  $('#transcript').appendChild(el);
+  $('#transcript').scrollTop = $('#transcript').scrollHeight;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function playLineAudio(agentKey, text) {
+  try {
+    const res = await fetch('/api/huddle/tts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken() },
+      body: JSON.stringify({ agentKey, text })
+    });
+    if (!res.ok) return false; // voice not configured or failed — caller falls back to a timed pause
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    await new Promise((resolve) => {
+      audio.onended = resolve;
+      audio.onerror = resolve;
+      audio.play().catch(resolve);
+    });
+    URL.revokeObjectURL(url);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function runPlayback(attendees, lines, voiceEnabled) {
+  const spokenKeys = new Set();
+  const agentLines = lines.filter(l => l.agentKey !== 'sys' && l.agentKey !== 'user');
+  for (const line of agentLines) {
+    renderTiles(attendees, line.agentKey, spokenKeys);
+    appendLine(line.agentKey, line.text);
+    if (voiceEnabled) {
+      const played = await playLineAudio(line.agentKey, line.text);
+      if (!played) await sleep(Math.min(6000, Math.max(1500, line.text.length * 35)));
+    } else {
+      await sleep(Math.min(6000, Math.max(1200, line.text.length * 28)));
+    }
+    spokenKeys.add(line.agentKey);
+  }
+  renderTiles(attendees, null, spokenKeys);
+}
+
+function setupMic() {
+  $('#mic-consent').classList.add('hidden');
+  $('#mic-ui').classList.remove('hidden');
+  $('#btn-submit').classList.remove('hidden');
+  $('#btn-type-instead').classList.remove('hidden');
+
+  $('#btn-record').onclick = async () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recordedChunks = [];
+      recordedMimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      mediaRecorder = new MediaRecorder(stream, { mimeType: recordedMimeType });
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        $('#btn-record').textContent = '● Start recording';
+        $('#rec-status').textContent = 'Transcribing…';
+        $('#rec-status').classList.remove('hidden');
+        const blob = new Blob(recordedChunks, { type: recordedMimeType });
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64 = reader.result.split(',')[1];
+          try {
+            const { text } = await api('/api/huddle/transcribe', {
+              method: 'POST',
+              body: JSON.stringify({ audioBase64: base64, mimeType: recordedMimeType })
+            });
+            $('#update-text').value = text;
+            $('#update-text').classList.remove('hidden');
+            $('#btn-submit').disabled = !text.trim();
+            $('#rec-status').textContent = 'Transcribed — review and edit below before sending.';
+          } catch (e) {
+            $('#turn-err').textContent = e.message;
+            $('#turn-err').classList.remove('hidden');
+            $('#update-text').classList.remove('hidden');
+            $('#rec-status').classList.add('hidden');
+          }
+        };
+        reader.readAsDataURL(blob);
+      };
+      mediaRecorder.start();
+      $('#btn-record').textContent = '■ Stop recording';
+      $('#rec-status').textContent = 'Recording…';
+      $('#rec-status').classList.remove('hidden');
+    } catch (e) {
+      $('#turn-err').textContent = 'Could not access your microphone — you can type your update instead.';
+      $('#turn-err').classList.remove('hidden');
+      $('#update-text').classList.remove('hidden');
+    }
+  };
+
+  $('#btn-type-instead').onclick = () => {
+    $('#mic-ui').classList.add('hidden');
+    $('#update-text').classList.remove('hidden');
+  };
+}
+
+function chooseTypedUpdate() {
+  $('#mic-consent').classList.add('hidden');
+  $('#update-text').classList.remove('hidden');
+  $('#btn-submit').classList.remove('hidden');
+}
+
+function setupTurn(micEnabled) {
+  $('#turn-card').classList.remove('hidden');
+  $('#turn-hint').textContent = micEnabled ? 'Record your update, or type it.' : 'Type your update.';
+
+  if (micEnabled) {
+    // Ask before touching the microphone at all — see the consent copy in
+    // the HTML above. Nothing records until the user explicitly opts in.
+    $('#mic-consent').classList.remove('hidden');
+    $('#btn-consent-voice').onclick = setupMic;
+    $('#btn-consent-type').onclick = chooseTypedUpdate;
+  } else {
+    chooseTypedUpdate();
+  }
+
+  $('#update-text').addEventListener('input', () => {
+    $('#btn-submit').disabled = !$('#update-text').value.trim();
+  });
+
+  $('#btn-submit').onclick = async () => {
+    const text = $('#update-text').value.trim();
+    if (!text) return;
+    $('#btn-submit').disabled = true;
+    $('#btn-submit').textContent = 'Sending…';
+    try {
+      const { ack } = await api('/api/huddle/speak', { method: 'POST', body: JSON.stringify({ text }) });
+      appendLine('user', text);
+      appendLine('pm', ack);
+      $('#turn-card').classList.add('hidden');
+      $('#done-card').classList.remove('hidden');
+    } catch (e) {
+      $('#turn-err').textContent = e.message;
+      $('#turn-err').classList.remove('hidden');
+      $('#btn-submit').disabled = false;
+      $('#btn-submit').textContent = 'Send update';
+    }
+  };
+}
+
+async function boot() {
+  let me;
+  try { me = await api('/api/auth/me'); } catch (e) { location.href = '/login.html'; return; }
+  if (!me.user) { location.href = '/login.html'; return; }
+
+  try {
+    const workspace = await api('/api/workspace').catch(() => null);
+    if (workspace) AGENT_NAMES = Object.fromEntries(workspace.team.map(t => [t.key, t.name]));
+
+    const data = await api('/api/huddle/today');
+    $('#loading').classList.add('hidden');
+
+    if (!data.isHuddleDay) {
+      $('#not-huddle-day').classList.remove('hidden');
+      return;
+    }
+
+    $('#huddle-body').classList.remove('hidden');
+    const missedNote = data.missedCount > 0 ? ` · missed ${data.missedCount} previous huddle${data.missedCount > 1 ? 's' : ''}` : '';
+    $('#sub-line').textContent = `Day ${data.dayIndex + 1} · ${data.attendees.length} teammates${missedNote}`;
+
+    renderTiles(data.attendees, null, new Set());
+
+    if (data.userSpoke) {
+      // Already gave today's update (possibly in an earlier visit) — just
+      // show the transcript as-is, no need to replay it as a meeting.
+      for (const l of data.lines) appendLine(l.agentKey, l.text);
+      $('#done-card').classList.remove('hidden');
+    } else {
+      // Haven't spoken yet — play it back as a real sequential meeting
+      // (whether this is the first visit or a reload mid-huddle).
+      await runPlayback(data.attendees, data.lines, data.voiceEnabled);
+      setupTurn(data.micEnabled);
+    }
+  } catch (e) {
+    $('#loading').classList.add('hidden');
+    $('#error').classList.remove('hidden');
+    $('#error').textContent = e.message;
+  }
+}
+
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kleos — Workplace Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08090A;
+  --panel:#111214;
+  --panel-2:#17181B;
+  --raised:#1C1D20;
+  --line:rgba(255,255,255,.08);
+  --line-soft:rgba(255,255,255,.05);
+  --ink:#F7F8F8;
+  --ink-2:#8A8F98;
+  --ink-3:#62666D;
+  --bronze:#D4A853;
+  --bronze-dim:rgba(212,168,83,.4);
+  --blue:#5E9FF2;
+  --amber:#F2994A;
+  --red:#EB5757;
+  --green:#4CB782;
+  --violet:#9B7BE8;
+  --sans:'Inter',system-ui,sans-serif;
+  --serif:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:var(--bg);color:var(--ink);font-family:var(--sans);
+  font-size:14px;line-height:1.5;overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--raised);border-radius:4px}
+::-webkit-scrollbar-track{background:transparent}
+
+.mono{font-family:var(--mono)}
+.screen{position:fixed;inset:0;display:none;flex-direction:column}
+.screen.on{display:flex}
+
+/* ─────────── TRACK SELECT ─────────── */
+#screen-select{align-items:center;justify-content:center;padding:32px;overflow-y:auto;
+  background:radial-gradient(ellipse 1100px 650px at 50% -12%, rgba(212,168,83,.08), transparent 60%), var(--bg);}
+.sel-wrap{width:min(1040px,100%);text-align:center;animation:fadeInUp .5s var(--ease)}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.wordmark{font-family:var(--serif);font-weight:700;font-size:clamp(40px,7vw,64px);line-height:1;letter-spacing:-.03em}
+.wordmark em{font-style:normal;color:var(--bronze)}
+.kleos-def{
+  font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-3);margin-top:18px;
+}
+.kleos-gloss{color:var(--ink-2);max-width:440px;margin:14px auto 0;font-size:14.5px}
+.sel-label{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--ink-3);margin:52px 0 16px;display:flex;align-items:center;gap:14px;justify-content:center;
+}
+.sel-label::before,.sel-label::after{content:'';height:1px;width:60px;background:var(--line)}
+.tracks{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;text-align:left}
+@media(max-width:820px){.tracks{grid-template-columns:1fr}}
+.track{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg,12px);padding:22px 20px 20px;
+  transition:border-color .18s var(--ease), transform .18s var(--ease), background .18s var(--ease);position:relative;overflow:hidden;
+}
+.track:hover{border-color:var(--bronze-dim);transform:translateY(-3px);background:var(--panel-2);box-shadow:0 14px 30px rgba(0,0,0,.35)}
+.track .num{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.14em}
+.track h3{font-size:16.5px;font-weight:600;margin:12px 0 6px;letter-spacing:-.01em}
+.track p{color:var(--ink-2);font-size:13px;line-height:1.55;min-height:56px}
+.track .meta{
+  margin-top:16px;padding-top:14px;border-top:1px solid var(--line-soft);
+  font-family:var(--mono);font-size:10.5px;color:var(--ink-3);display:flex;justify-content:space-between;
+}
+.track .go{color:var(--bronze);opacity:0;transition:opacity .18s var(--ease)}
+.track:hover .go{opacity:1}
+.sel-foot{margin-top:34px;font-size:12.5px;color:var(--ink-3)}
+
+/* ─────────── BOOT ─────────── */
+#screen-boot{align-items:center;justify-content:center}
+.boot{width:min(520px,90vw);font-family:var(--mono);font-size:12.5px}
+.boot-line{color:var(--ink-3);padding:5px 0;display:flex;gap:12px;opacity:0;animation:bootIn .3s forwards}
+.boot-line .ok{color:var(--green)}
+.boot-line .val{color:var(--ink-2)}
+@keyframes bootIn{to{opacity:1}}
+.boot-bar{height:2px;background:var(--line);margin-top:22px;overflow:hidden;border-radius:2px}
+.boot-bar i{display:block;height:100%;width:0;background:var(--bronze);animation:bootBar 3.4s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes bootBar{to{width:100%}}
+
+/* ─────────── TOPBAR ─────────── */
+#topbar{
+  height:50px;flex:0 0 50px;background:var(--panel);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;padding:0 16px;gap:16px;
+}
+.tb-brand{font-family:var(--serif);font-weight:700;font-size:16px;letter-spacing:-.01em}
+.tb-brand em{font-style:normal;color:var(--bronze)}
+.tb-div{width:1px;height:20px;background:var(--line)}
+.tb-co{display:flex;align-items:center;gap:9px}
+.tb-logo{width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,#5E9FF2,#9B7BE8);
+  display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff}
+.tb-co b{font-weight:600;font-size:13.5px}
+.tb-co span{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.tb-spacer{flex:1}
+.tb-chip{
+  font-family:var(--mono);font-size:10.5px;padding:5px 10px;border-radius:6px;
+  border:1px solid var(--line);color:var(--ink-2);display:flex;align-items:center;gap:7px;
+  transition:border-color .15s var(--ease), background .15s var(--ease);
+}
+.tb-chip b{color:var(--ink);font-weight:500}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.dot.amber{background:var(--amber)}
+.tb-me{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2)}
+.av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
+  font-size:10.5px;font-weight:700;font-family:var(--mono);color:#15100A;flex:0 0 auto}
+
+/* ─────────── WORKSPACE GRID ─────────── */
+.work-grid{flex:1;display:grid;grid-template-columns:216px 1fr 380px;min-height:0}
+@media(max-width:1180px){.work-grid{grid-template-columns:180px 1fr 330px}}
+.col{min-height:0;display:flex;flex-direction:column}
+.col-left{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto}
+.col-mid{background:var(--bg);min-width:0}
+.col-right{background:var(--panel);border-left:1px solid var(--line);overflow:hidden}
+
+.sec-head{
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);padding:16px 14px 8px;display:flex;justify-content:space-between;align-items:center;
+}
+.chan{display:flex;align-items:center;gap:8px;padding:6px 14px;color:var(--ink-2);font-size:13px;
+  cursor:pointer;position:relative;border-radius:6px;margin:0 6px;width:calc(100% - 12px);transition:background .12s var(--ease),color .12s var(--ease)}
+.chan:hover{background:var(--surface-hover,var(--raised))}
+.chan.active{background:var(--raised);color:var(--ink)}
+.chan .hash{color:var(--ink-3);font-family:var(--mono);font-size:12px}
+.chan .ping{margin-left:auto;width:15px;height:15px;border-radius:50%;background:var(--red);
+  color:#fff;font-size:9.5px;font-weight:700;display:none;place-items:center;font-family:var(--mono)}
+.chan.has-ping .ping{display:grid;animation:pop .25s}
+@keyframes pop{from{transform:scale(0)}}
+
+.member{display:flex;align-items:center;gap:9px;padding:7px 14px;border-radius:6px;margin:0 6px;width:calc(100% - 12px)}
+.ring{position:relative;flex:0 0 auto}
+.ring::after{
+  content:'';position:absolute;inset:-3px;border-radius:50%;border:1.5px solid var(--green);
+}
+.ring.idle::after{border-color:var(--ink-3)}
+.ring.busy::after{border-color:var(--red);animation:pulseRing 1.1s ease-in-out infinite}
+@keyframes pulseRing{0%,100%{opacity:1}50%{opacity:.25}}
+.member .nm{font-size:12.5px;line-height:1.25;min-width:0}
+.member .nm b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.member .nm span{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.04em}
+
+/* ─────────── LEDGER (signature) ─────────── */
+.ledger{margin:18px 10px 20px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2);overflow:hidden}
+.ledger-h{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--bronze);padding:9px 11px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
+.ledger-body{padding:6px 0;max-height:200px;overflow-y:auto}
+.ldg{display:flex;gap:8px;padding:5px 11px;font-size:11.5px;color:var(--ink-2);line-height:1.35;
+  animation:ldgIn .3s ease}
+@keyframes ldgIn{from{opacity:0;transform:translateX(-6px)}}
+.ldg .t{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);flex:0 0 auto;padding-top:1px}
+.ledger-empty{padding:12px 11px;font-size:11.5px;color:var(--ink-3);font-style:italic}
+
+/* ─────────── CENTER: CHAT ─────────── */
+.chat-head{
+  flex:0 0 auto;padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;
+}
+.chat-head h2{font-size:14.5px;font-weight:600;letter-spacing:-.01em}
+.chat-head .sub{font-size:12px;color:var(--ink-3)}
+.feed{flex:1;overflow-y:auto;padding:16px 20px 8px;min-height:0}
+.msg{display:flex;gap:11px;padding:9px 0;animation:msgIn .32s cubic-bezier(.2,.8,.3,1)}
+@keyframes msgIn{from{opacity:0;transform:translateY(7px)}}
+.msg .body{min-width:0;flex:1}
+.msg .hdr{display:flex;align-items:baseline;gap:8px;margin-bottom:3px}
+.msg .hdr b{font-size:13.5px;font-weight:600}
+.msg .hdr .role{font-family:var(--mono);font-size:9.5px;padding:1.5px 5px;border-radius:3px;
+  border:1px solid var(--line);color:var(--ink-3);letter-spacing:.06em}
+.msg .hdr time{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+.msg .txt{font-size:13.5px;color:#C7CAD1;line-height:1.62}
+.msg .txt p+p{margin-top:9px}
+.msg .txt code{font-family:var(--mono);font-size:12px;background:var(--raised);padding:1.5px 5px;
+  border-radius:4px;color:var(--bronze)}
+.msg .txt strong{color:var(--ink);font-weight:600}
+.msg.system .txt{color:var(--ink-2);font-size:12.5px}
+
+.callout{border-left:2px solid var(--line);padding:10px 0 10px 13px;margin-top:9px;background:var(--panel);
+  border-radius:0 6px 6px 0}
+.callout.crit{border-left-color:var(--red);background:rgba(235,87,87,.07)}
+.callout.warn{border-left-color:var(--amber);background:rgba(242,153,74,.07)}
+.callout.info{border-left-color:var(--blue);background:rgba(94,159,242,.07)}
+.callout .k{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-2);display:block;margin-bottom:5px}
+.callout.crit .k{color:var(--red)}
+.callout.warn .k{color:var(--amber)}
+.callout.info .k{color:var(--blue)}
+
+.rubric{margin-top:11px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.rubric-h{padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);
+  display:flex;justify-content:space-between}
+.rub{display:flex;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line-soft);font-size:12.5px}
+.rub:last-child{border-bottom:none}
+.rub .mk{font-family:var(--mono);font-size:11px;flex:0 0 auto;width:14px;text-align:center}
+.rub.fail .mk{color:var(--red)}
+.rub.pass .mk{color:var(--green)}
+.rub .rt b{display:block;font-weight:600;font-size:12.5px;margin-bottom:2px}
+.rub .rt span{color:var(--ink-2);font-size:12px;line-height:1.5}
+
+.typing{display:flex;gap:11px;padding:9px 0;align-items:center}
+.typing .bubble{display:flex;gap:4px;padding:9px 12px;background:var(--panel);border-radius:14px}
+.typing i{width:5px;height:5px;border-radius:50%;background:var(--ink-3);animation:blink 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.18s}
+.typing i:nth-child(3){animation-delay:.36s}
+@keyframes blink{0%,60%,100%{opacity:.25}30%{opacity:1}}
+
+.composer{flex:0 0 auto;padding:12px 20px 16px}
+.composer-in{
+  border:1px solid var(--line);border-radius:10px;background:var(--panel);display:flex;align-items:flex-end;
+  transition:border-color .15s var(--ease),box-shadow .15s var(--ease);
+}
+.composer-in:focus-within{border-color:var(--bronze-dim);box-shadow:0 0 0 3px rgba(212,168,83,.12)}
+.composer textarea{
+  flex:1;background:none;border:none;outline:none;color:var(--ink);font-family:inherit;font-size:13.5px;
+  padding:11px 13px;resize:none;max-height:110px;line-height:1.5;
+}
+.composer textarea::placeholder{color:var(--ink-3)}
+.composer .send{padding:8px 14px;margin:0 8px 7px 0;border-radius:7px;background:var(--raised);
+  font-size:12.5px;font-weight:600;color:var(--ink-2);transition:all .15s var(--ease)}
+.composer .send:hover{background:var(--bronze);color:#15100A;transform:translateY(-1px)}
+.composer.locked .composer-in{opacity:.5;pointer-events:none}
+.lock-note{display:none;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;
+  color:var(--amber);padding:8px 2px 0}
+.composer.locked .lock-note{display:flex}
+
+/* ─────────── RIGHT: TICKETS / SANDBOX ─────────── */
+.right-scroll{flex:1;overflow-y:auto;min-height:0}
+.panel-h{
+  padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);
+  position:sticky;top:0;background:var(--panel);z-index:2;
+}
+.tk{border-bottom:1px solid var(--line-soft);padding:13px 14px;transition:background .15s var(--ease)}
+.tk:hover{background:var(--surface-hover,var(--raised))}
+.tk-top{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.tk-id{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.pri{font-family:var(--mono);font-size:9.5px;padding:1.5px 6px;border-radius:4px;letter-spacing:.06em}
+.pri.high{background:rgba(235,87,87,.14);color:#FF9B9B}
+.pri.med{background:rgba(242,153,74,.14);color:var(--amber)}
+.pri.low{background:var(--raised);color:var(--ink-3)}
+.tk h4{font-size:13.5px;font-weight:600;line-height:1.4;margin-bottom:5px}
+.tk .desc{font-size:12.5px;color:var(--ink-2);line-height:1.55}
+.tk .est{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:8px}
+.tk.locked{opacity:.42}
+.btn{
+  display:block;width:100%;margin-top:11px;padding:9px;border-radius:8px;background:var(--bronze);
+  color:#15100A;font-weight:600;font-size:12.5px;letter-spacing:.01em;transition:all .15s var(--ease);
+}
+.btn:hover{background:#E2BA6C;transform:translateY(-1px);box-shadow:0 6px 16px rgba(212,168,83,.22)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn.ghost{background:var(--raised);color:var(--ink-2);font-weight:600;border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--surface-hover,#1f2024);color:var(--ink);box-shadow:none}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+
+.status-strip{padding:12px 14px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+.status-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.st{font-family:var(--mono);font-size:10px;letter-spacing:.1em;padding:3px 8px;border-radius:5px}
+.st.todo{background:var(--raised);color:var(--ink-2)}
+.st.prog{background:rgba(94,159,242,.15);color:#9EC2F7}
+.st.review{background:rgba(242,153,74,.15);color:var(--amber)}
+.st.fail{background:rgba(235,87,87,.15);color:#FF9B9B}
+.st.done{background:rgba(76,183,130,.15);color:#7FE0AB}
+.timer{font-family:var(--mono);font-size:11px;color:var(--ink-2)}
+.timer.urgent{color:var(--red)}
+.prog-track{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.prog-track i{display:block;height:100%;background:var(--blue);width:0;transition:width .5s var(--ease)}
+
+.sandbox-tabs{display:flex;border-bottom:1px solid var(--line);background:var(--panel)}
+.stab{padding:9px 13px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--ink-3);
+  border-bottom:2px solid transparent;text-transform:uppercase;transition:color .15s var(--ease)}
+.stab:hover{color:var(--ink-2)}
+.stab.on{color:var(--bronze);border-bottom-color:var(--bronze)}
+.stab .badge{display:inline-block;margin-left:5px;background:var(--red);color:#fff;border-radius:7px;
+  padding:0 5px;font-size:9px}
+.spane{display:none;padding:14px}
+.spane.on{display:block}
+.deliv-label{font-size:12px;color:var(--ink-2);margin-bottom:8px;line-height:1.5}
+.deliv-label b{color:var(--ink)}
+textarea.deliv{
+  width:100%;height:190px;background:var(--bg);border:1px solid var(--line);border-radius:8px;
+  color:var(--ink);font-family:var(--mono);font-size:11.5px;line-height:1.65;padding:11px;resize:none;outline:none;
+  transition:border-color .15s var(--ease),box-shadow .15s var(--ease);
+}
+textarea.deliv:focus{border-color:var(--bronze-dim);box-shadow:0 0 0 3px rgba(212,168,83,.12)}
+textarea.deliv::placeholder{color:var(--ink-3)}
+.deliv-actions{display:flex;gap:8px;margin-top:10px}
+.deliv-actions .btn{margin-top:0}
+.hint{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:9px;line-height:1.5}
+
+.console{background:#08090A;font-family:var(--mono);font-size:11px;padding:12px;height:280px;
+  overflow-y:auto;line-height:1.75}
+.cl{display:flex;gap:9px;animation:msgIn .2s}
+.cl .lv{flex:0 0 auto;width:38px}
+.cl.ok .lv{color:var(--green)}
+.cl.warn .lv{color:var(--amber)}
+.cl.err .lv{color:var(--red)}
+.cl.info .lv{color:var(--blue)}
+.cl .m{color:var(--ink-2)}
+.cl.err .m{color:#D9A3A3}
+
+/* ─────────── TOASTS ─────────── */
+#toasts{position:fixed;top:60px;right:16px;z-index:60;display:flex;flex-direction:column;gap:9px;
+  width:328px;pointer-events:none}
+.toast{
+  background:var(--panel-2);border:1px solid var(--line);border-left-width:3px;border-radius:10px;
+  padding:11px 13px;box-shadow:0 16px 36px rgba(0,0,0,.5);animation:toastIn .34s cubic-bezier(.2,.9,.3,1);
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(28px)}}
+.toast.out{animation:toastOut .3s forwards}
+@keyframes toastOut{to{opacity:0;transform:translateX(28px)}}
+.toast.crit{border-left-color:var(--red)}
+.toast.warn{border-left-color:var(--amber)}
+.toast.info{border-left-color:var(--blue)}
+.toast.good{border-left-color:var(--green)}
+.toast .th{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:4px}
+.toast .tb{font-size:12.5px;color:var(--ink);line-height:1.45}
+
+/* ─────────── GRADUATION ─────────── */
+#screen-grad{overflow-y:auto;background:radial-gradient(ellipse 1100px 650px at 50% -8%, rgba(212,168,83,.08), transparent 60%), var(--bg)}
+.grad-wrap{width:min(940px,92vw);margin:0 auto;padding:56px 0 80px;animation:fadeInUp .5s var(--ease)}
+.grad-eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--bronze);text-align:center}
+.grad-title{font-family:var(--serif);font-weight:700;font-size:clamp(30px,4.6vw,44px);text-align:center;line-height:1.15;
+  margin:16px 0 10px;letter-spacing:-.02em}
+.grad-title em{font-style:normal;color:var(--bronze)}
+.grad-sub{text-align:center;color:var(--ink-2);font-size:14px;max-width:520px;margin:0 auto}
+.grad-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;margin-top:44px}
+@media(max-width:860px){.grad-grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;transition:border-color .2s var(--ease)}
+.card-h{padding:13px 17px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);display:flex;justify-content:space-between}
+.card-b{padding:17px}
+.dim{margin-bottom:19px}
+.dim:last-child{margin-bottom:0}
+.dim-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.dim-top b{font-size:13.5px;font-weight:600}
+.dim-top .sc{font-family:var(--mono);font-size:12.5px;color:var(--bronze)}
+.bar{height:5px;background:var(--raised);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:3px;transition:width 1.1s cubic-bezier(.2,.8,.3,1)}
+.dim .note{font-size:11.5px;color:var(--ink-3);margin-top:6px;line-height:1.5}
+.narr{font-size:13.5px;color:#C7CAD1;line-height:1.7}
+.narr p+p{margin-top:11px}
+.manifest{border-top:1px solid var(--line-soft);padding:12px 17px;display:flex;align-items:center;gap:12px}
+.manifest:first-of-type{border-top:none}
+.manifest .ico{width:30px;height:30px;border-radius:8px;background:var(--raised);display:grid;place-items:center;
+  font-family:var(--mono);font-size:9.5px;color:var(--bronze);flex:0 0 auto}
+.manifest .mi{min-width:0;flex:1}
+.manifest .mi b{display:block;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.manifest .mi span{font-family:var(--mono);font-size:9.5px;color:var(--ink-3)}
+.manifest .vf{font-family:var(--mono);font-size:9.5px;color:var(--green);flex:0 0 auto}
+.grad-cta{display:flex;gap:12px;justify-content:center;margin-top:38px}
+.grad-cta .btn{width:auto;padding:12px 26px;margin-top:0}
+.stele{
+  margin-top:44px;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:26px 30px;
+}
+.stele-h{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--bronze);
+  text-align:center;margin-bottom:20px}
+.stele-rows{display:grid;gap:9px}
+.stele-row{display:grid;grid-template-columns:70px 1fr;gap:16px;font-size:12.5px;
+  padding-bottom:9px;border-bottom:1px solid var(--line-soft)}
+.stele-row:last-child{border-bottom:none;padding-bottom:0}
+.stele-row .t{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.stele-row .d{color:var(--ink-2);line-height:1.5}
+
+/* ─────────── MOBILE WORKSPACE ─────────── */
+#mobile-tabs{display:none;position:fixed;bottom:0;left:0;right:0;height:56px;background:var(--panel);
+  border-top:1px solid var(--line);z-index:50}
+#mobile-tabs button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  font-size:10px;font-family:var(--sans);color:var(--ink-3);background:none;border:none;position:relative}
+#mobile-tabs button.active{color:var(--bronze)}
+#mobile-tabs .mtab-ico{font-size:15px;line-height:1}
+@media(max-width:760px){
+  .work-grid{grid-template-columns:1fr;padding-bottom:56px}
+  .col-left,.col-mid,.col-right{display:none}
+  .col-left.mobile-on,.col-mid.mobile-on,.col-right.mobile-on{display:flex}
+  #mobile-tabs{display:flex}
+  #topbar{overflow-x:auto}
+}
+
+/* ─────────── FIRST-VISIT TOUR ─────────── */
+.tour-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px);
+  display:flex;align-items:center;justify-content:center;z-index:80;animation:fadeInUp .25s var(--ease)}
+.tour-overlay.hidden{display:none}
+.tour-card{width:min(480px,90vw);background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg,12px);
+  padding:26px;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.tour-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--bronze);margin-bottom:10px}
+.tour-card h3{font-size:18px;font-weight:600;letter-spacing:-.01em;margin-bottom:14px}
+.tour-item{display:flex;gap:12px;margin-bottom:14px}
+.tour-item:last-of-type{margin-bottom:20px}
+.tour-item .ico{width:28px;height:28px;border-radius:7px;background:var(--raised);display:flex;align-items:center;
+  justify-content:center;font-size:13px;flex:0 0 auto}
+.tour-item b{display:block;font-size:13px;font-weight:600;margin-bottom:2px}
+.tour-item span{font-size:12px;color:var(--ink-2);line-height:1.5}
+#tour-dismiss{width:100%}
+
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<!-- ══════════ SCREEN 1: TRACK SELECT ══════════ -->
+<section class="screen" id="screen-select">
+  <div class="sel-wrap">
+    <h1 class="wordmark">K<em>l</em>eos</h1>
+    <div class="kleos-def">κλέος · glory earned through deeds that others witness</div>
+    <p class="kleos-gloss">You don't get a certificate. You get a record of how you worked when the requirements changed on you.</p>
+
+    <div class="sel-label">Choose your function</div>
+    <div class="tracks" id="tracks"></div>
+
+    <p class="sel-foot">Sprint 3 at Meridian · 2-week cycle · 4 AI teammates · deliverables reviewed against role rubrics</p>
+  </div>
+</section>
+
+<!-- ══════════ SCREEN 2: BOOT ══════════ -->
+<section class="screen on" id="screen-boot">
+  <div class="boot" id="boot"><div class="boot-line" style="animation-delay:0s"><span class="ok">…</span><span style="flex:1">Checking your shift</span></div></div>
+</section>
+
+<!-- ══════════ SCREEN 3: WORKSPACE ══════════ -->
+<section class="screen" id="screen-work">
+  <header id="topbar">
+    <div class="tb-brand">K<em>l</em>eos</div>
+    <div class="tb-div"></div>
+    <div class="tb-co">
+      <div class="tb-logo">M</div>
+      <div><b>Meridian</b> <span id="tb-track">· Product</span></div>
+    </div>
+    <div class="tb-spacer"></div>
+    <div class="tb-chip"><span class="dot"></span>Sprint 3 · <b id="tb-days">Day 1 of —</b></div>
+    <div class="tb-chip" id="tb-status"><span class="dot amber"></span><b>1 open ticket</b></div>
+    <div class="tb-chip mono" id="tb-timer" style="color:var(--ink)"><span class="dot" id="tb-timer-dot"></span><b id="tb-timer-text">--:--:--</b></div>
+    <button class="tb-chip" id="tb-checkout" style="cursor:pointer">Check out</button>
+    <div class="tb-me">
+      <div class="av" style="background:var(--bronze)">YOU</div>
+    </div>
+  </header>
+
+  <div class="work-grid">
+    <!-- LEFT -->
+    <aside class="col col-left">
+      <a id="huddle-banner" href="/huddle.html" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:8px;
+        background:rgba(212,168,83,.1);border:1px solid rgba(212,168,83,.3);color:var(--bronze);
+        font-size:11.5px;text-decoration:none;line-height:1.4"></a>
+      <div class="sec-head">Channels</div>
+      <div id="channel-list">
+        <div class="chan active" data-ch="sprint-3"><span class="hash">#</span>sprint-3<span class="ping">1</span></div>
+        <div class="chan" data-ch="general"><span class="hash">#</span>general<span class="ping">1</span></div>
+        <div class="chan" data-ch="design-review"><span class="hash">#</span>design-review<span class="ping">1</span></div>
+        <div class="chan" data-ch="incidents"><span class="hash">#</span>incidents<span class="ping">1</span></div>
+      </div>
+
+      <div class="sec-head" id="dm-head" style="display:none">Direct Messages</div>
+      <div id="dm-list"></div>
+
+      <div class="sec-head">Team <span id="presence-note" class="mono" style="font-size:9px"></span></div>
+      <div id="team"></div>
+
+      <div class="ledger">
+        <div class="ledger-h"><span>Kleos record</span><span id="ldg-count">0</span></div>
+        <div class="ledger-body" id="ledger">
+          <div class="ledger-empty">Nothing witnessed yet.</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER -->
+    <section class="col col-mid">
+      <div class="chat-head">
+        <div>
+          <h2 id="ch-title"># sprint-3</h2>
+          <div class="sub" id="ch-sub">Checkout rebuild · Cairo, Riyadh, Karachi launch</div>
+        </div>
+      </div>
+      <div class="feed" id="feed"></div>
+      <div class="composer" id="composer">
+        <div class="composer-in">
+          <textarea id="chat-in" rows="1" maxlength="6000" placeholder="Message #sprint-3 — ask a question, flag a blocker, push back"></textarea>
+          <button class="send" id="chat-send">Send</button>
+        </div>
+        <div class="lock-note"><span>◍</span> Input locked while your submission is under review. The lead is reading your work.</div>
+      </div>
+    </section>
+
+    <!-- RIGHT -->
+    <aside class="col col-right">
+      <div class="right-scroll" id="right-scroll">
+        <!-- backlog view -->
+        <div id="view-backlog">
+          <div class="panel-h"><span>Backlog</span><span id="bk-count">3 open</span></div>
+          <div id="backlog"></div>
+        </div>
+        <!-- active ticket view -->
+        <div id="view-active" style="display:none">
+          <div class="status-strip">
+            <div class="status-row">
+              <span class="mono" style="font-size:10.5px;color:var(--ink-3)" id="act-id">QE-402</span>
+              <span class="st prog" id="act-status">IN PROGRESS</span>
+            </div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:9px;line-height:1.4" id="act-title"></div>
+            <div class="status-row">
+              <span class="timer" id="act-timer">Due in 31h 40m</span>
+              <span class="mono" style="font-size:10px;color:var(--ink-3)" id="act-rev">Revision 1</span>
+            </div>
+            <div class="prog-track"><i id="act-prog"></i></div>
+          </div>
+
+          <div class="sandbox-tabs">
+            <button class="stab on" data-pane="deliverable">Sandbox</button>
+            <button class="stab" data-pane="console">Console<span class="badge" id="con-badge" style="display:none">!</span></button>
+            <button class="stab" data-pane="brief">Brief</button>
+          </div>
+
+          <div class="spane on" id="pane-deliverable">
+            <div class="deliv-label" id="deliv-label"></div>
+            <textarea class="deliv" id="deliv" maxlength="6000" placeholder="Write your deliverable here…"></textarea>
+            <div class="deliv-actions">
+              <button class="btn ghost" id="btn-fill">Paste draft</button>
+              <button class="btn" id="btn-submit">Submit for review</button>
+            </div>
+            <div class="hint" id="deliv-hint">The lead reviews against the role rubric. Partial work scores better than late work.</div>
+          </div>
+
+          <div class="spane" id="pane-console">
+            <div class="console" id="console"></div>
+          </div>
+
+          <div class="spane" id="pane-brief">
+            <div style="font-size:12.5px;color:var(--ink-2);line-height:1.65" id="brief-body"></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <nav id="mobile-tabs">
+    <button data-tab="team"><span class="mtab-ico">☰</span>Team</button>
+    <button data-tab="chat"><span class="mtab-ico">◈</span>Chat</button>
+    <button data-tab="tickets"><span class="mtab-ico">▤</span>Tickets</button>
+  </nav>
+</section>
+
+<!-- ══════════ SCREEN 4: GRADUATION ══════════ -->
+<section class="screen" id="screen-grad">
+  <div class="grad-wrap">
+    <div class="grad-eyebrow">Sprint 3 closed</div>
+    <h1 class="grad-title">The record of what you <em>actually did</em></h1>
+    <p class="grad-sub" id="grad-sub"></p>
+
+    <div class="grad-grid">
+      <div class="card">
+        <div class="card-h"><span>Competency matrix</span><span id="grad-overall">—</span></div>
+        <div class="card-b" id="dims"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><span>Lead's review</span><span id="grad-lead">—</span></div>
+        <div class="card-b"><div class="narr" id="narrative"></div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-h"><span>Proof-of-work manifest</span><span>Public link · verified</span></div>
+      <div id="manifest"></div>
+    </div>
+
+    <div class="stele">
+      <div class="stele-h">Witnessed deeds</div>
+      <div class="stele-rows" id="stele"></div>
+    </div>
+
+    <div class="grad-cta">
+      <button class="btn ghost" id="btn-restart">Run another track</button>
+      <button class="btn" id="btn-portfolio">Publish to talent pool</button>
+    </div>
+  </div>
+</section>
+
+<div id="tour-overlay" class="tour-overlay hidden">
+  <div class="tour-card">
+    <div class="tour-eyebrow">First day</div>
+    <h3>Quick orientation</h3>
+    <div class="tour-item"><div class="ico">#</div><div><b>Channels &amp; DMs</b><span>Your team lives on the left — a channel per ticket, plus a direct line to everyone including cross-functional partners.</span></div></div>
+    <div class="tour-item"><div class="ico">▤</div><div><b>Sandbox &amp; tickets</b><span>Accept a ticket on the right, write your deliverable in the sandbox, and submit it for a real rubric-graded review.</span></div></div>
+    <div class="tour-item"><div class="ico">◆</div><div><b>Kleos record</b><span>Every reviewed submission gets logged in the ledger on the left — your running proof-of-work for this run.</span></div></div>
+    <div class="tour-item"><div class="ico">♪</div><div><b>The huddle</b><span>A few times a week the team meets — you'll see a banner here when it's time to join and give your update.</span></div></div>
+    <button class="btn" id="tour-dismiss">Got it — let's go</button>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+(()=>{"use strict";
+
+/* ═══════════════ DATA ═══════════════ */
+const PEOPLE = {
+  pm:    {n:'Yusra Kamal',    r:'AI_PM',          t:'Product Manager',    c:'#4D8DF0', i:'YK'},
+  tlead: {n:'Daniyal Rehman', r:'AI_TECH_LEAD',   t:'Eng Lead',           c:'#9B7BE8', i:'DR'},
+  dlead: {n:'Lina Haddad',    r:'AI_DESIGN_LEAD', t:'Design Director',    c:'#E0A458', i:'LH'},
+  qa:    {n:'Sentinel',       r:'AI_QA_BOT',      t:'QA Automation',      c:'#30A46C', i:'SN'},
+  stake: {n:'Omar Farouk',    r:'AI_STAKEHOLDER', t:'VP Growth',          c:'#E5484D', i:'OF'},
+  sys:   {n:'Kleos',          r:'SYSTEM',         t:'System',             c:'#68738A', i:'KL'},
+  // Live-mode-only roster (huddle regulars + cross-functional partners) —
+  // keyed to match AGENT_DEFS in agents.js exactly, since these come from
+  // GET /api/workspace's `team`/`dms` lists, not from the scripted preview.
+  ceo:        {n:'Rania Aboud',    r:'AI_CEO',        t:'CEO',                    c:'#F2C14E', i:'RA'},
+  cto:        {n:'Nathan Reeves',  r:'AI_CTO',        t:'CTO',                    c:'#5EB1BF', i:'NR'},
+  dirproduct: {n:'Claire Bennett', r:'AI_DIR_PRODUCT',t:'Director of Product',    c:'#C77DFF', i:'CB'},
+  design:     {n:'Emma Sullivan',  r:'AI_DESIGN_LEAD',t:'Design Director',        c:'#E0A458', i:'ES'},
+  marketing:  {n:'Grace Mitchell', r:'AI_MARKETING',  t:'Head of Marketing',      c:'#F76C6C', i:'GM'},
+  sales:      {n:'Ryan Coleman',   r:'AI_SALES',      t:'Regional Sales Lead',    c:'#6FCF97', i:'RC'}
+};
+
+const TRACKS = {
+  pm:{
+    key:'pm', label:'Product', name:'Product Management', live:true,
+    blurb:'Turn a contradictory stakeholder call into a PRD someone can build from — while the stakeholder changes his mind.',
+    stat:'PRD · metrics · scope cuts', lead:'pm', reviewer:'tlead',
+    ticket:{id:'QE-402', pri:'high', title:'Rewrite the checkout PRD from Tuesday\'s stakeholder call',
+      est:'2 days',
+      desc:'Omar\'s call transcript is in the thread. He contradicts himself on payment priority and never states a success metric. Produce a PRD engineering can estimate against.'},
+    brief:`<p><b>Context.</b> Meridian is a checkout layer for commerce in MENA and South Asia. Sprint 3 is the checkout rebuild for Cairo, Riyadh and Karachi.</p>
+      <p style="margin-top:10px"><b>Raw transcript excerpt (Omar Farouk, VP Growth):</b></p>
+      <p style="margin-top:8px;font-family:var(--mono);font-size:11.5px;color:var(--ink-3);line-height:1.7">"…so cards are the priority, obviously. Everyone uses cards. Although — the Egypt numbers, the wallet numbers are wild, Vodafone Cash especially. Let's do both. Actually let's do it properly, I don't want a half-experience. Ship it this sprint."</p>
+      <p style="margin-top:12px"><b>Deliverable.</b> A PRD containing: problem statement, in-scope, explicitly out-of-scope, success metrics with baselines, and a named risk.</p>`,
+    delivLabel:'<b>Deliverable — PRD.</b> Problem, scope, out-of-scope, success metrics, one named risk. Engineering must be able to estimate from it.',
+    draft:`PROBLEM
+Checkout conversion in Egypt is below the platform average. The current flow assumes card-first, but a large share of Egyptian buyers pay via mobile wallet.
+
+SCOPE
+- Add Vodafone Cash and Fawry as first-class payment methods
+- Card flow stays as-is
+
+OUT OF SCOPE
+- Riyadh and Karachi wallets (next sprint)
+- Refunds and chargebacks for wallet payments
+
+SUCCESS METRICS
+- Checkout completion rate in EG: 61.4% -> 68%
+- Wallet share of EG transactions: 0% -> 25% within 30 days
+
+RISK
+Fawry settlement is T+2. Merchant payout timing changes and Finance has not signed off.`,
+    fixNote:'Add the pivot decision and cut scope to fit the sprint.',
+    draft2:`PROBLEM
+Checkout completion in Egypt sits at 61.4% against a 74% platform average. Buyer research and the drop-off data both point at the same cause: the flow is card-first, and 38% of EG buyers reach payment with no card they intend to use.
+
+DECISION LOG
+Sprint 3 pivots to wallet-first for EG after Omar's Wed direction change. Cards remain but move below wallets in the EG payment list. This is a decision, not a scope addition — see cuts below.
+
+IN SCOPE
+- Vodafone Cash as primary EG method
+- Payment method ordering by locale
+
+OUT OF SCOPE (cut to protect the date)
+- Fawry (needs Finance sign-off on T+2 settlement — moved to Sprint 4)
+- Riyadh and Karachi wallet work
+- Wallet refund flows
+
+SUCCESS METRICS
+- EG checkout completion: 61.4% -> 68% by day 30
+- Wallet share of EG transactions: 0% -> 25% by day 30
+- Guardrail: card completion must not drop below 59%
+
+RISK
+If Vodafone Cash auth latency exceeds 4s at p95, completion gains reverse. Sentinel is instrumenting before rollout.`,
+    console:[
+      {lv:'INFO', m:'Linked doc opened · meridian/prd/checkout-eg-v3'},
+      {lv:'WARN', m:'No success metric detected in document'},
+      {lv:'WARN', m:'Section "Out of scope" is empty'},
+      {lv:'INFO', m:'Baseline data available: eg_checkout_funnel_q2 (attached)'}
+    ],
+    console2:[
+      {lv:'OK',   m:'Success metrics detected with baselines · 3 found'},
+      {lv:'OK',   m:'Scope cut documented with rationale'},
+      {lv:'INFO', m:'Decision log present — traceable to stakeholder input'},
+      {lv:'OK',   m:'Document estimable · engineering handoff ready'}
+    ],
+    fail:{
+      lead:'tlead',
+      open:'Read it twice. It is a clean document for the sprint you were briefed on Monday, and Omar changed that on Wednesday. Three things before I can estimate this.',
+      flags:[
+        {t:'Scope grew after the pivot', d:'You added wallets and kept everything else. Nothing was cut. This is now roughly 14 days of work in a 6-day window.'},
+        {t:'The pivot is invisible', d:'Someone reading this in a month cannot tell that priority changed or why. Log the decision.'},
+        {t:'No guardrail metric', d:'You have two success metrics and nothing that tells us when to roll back. What is the card-completion floor?'}
+      ]
+    },
+    pass:{
+      lead:'tlead',
+      open:'This I can estimate. The decision log is the part that matters — when Finance asks in November why Fawry slipped, the answer is in the document instead of in someone\'s memory.',
+      flags:[
+        {t:'Scope cut with rationale', d:'Fawry deferred against a named blocker rather than silently dropped.'},
+        {t:'Guardrail present', d:'Card floor at 59% gives us a rollback trigger.'},
+        {t:'Traceable decision', d:'Pivot attributed and dated.'}
+      ]
+    },
+    dims:[
+      {n:'Technical Precision', s:78, note:'Metrics carried baselines. Settlement risk identified without prompting.'},
+      {n:'Scope Management',    s:71, note:'Cut only after the lead flagged it. Strong once corrected.'},
+      {n:'Communication',       s:86, note:'Asked one clarifying question before writing. Decision log is unusually clear for this level.'},
+      {n:'Speed under Pressure',s:58, note:'Lost 4h to the pivot before re-planning. Median for this ticket is 2h.'}
+    ],
+    narrative:`<p>You write documents that other people can act on, which is rarer than it sounds. The decision log in v2 is the strongest artifact in this sprint.</p>
+      <p>Your failure mode is additive scoping. When Omar changed direction you absorbed the change instead of trading against it — the first PRD was a superset, not a re-plan. You corrected in one pass after being told, which is the right recovery, but the instinct to protect the date has to arrive before the review, not after it.</p>
+      <p>Next sprint I want to see you push back on Omar in the channel, in writing, within an hour of a pivot.</p>`,
+    artifacts:[
+      {n:'checkout-eg-prd-v2.md', k:'PRD', h:'sha256:4f2a…c19b'},
+      {n:'decision-log-sprint3.md', k:'DOC', h:'sha256:9b77…2e04'},
+      {n:'Review thread · 2 revisions', k:'LOG', h:'sha256:1c30…88af'}
+    ]
+  },
+
+  design:{
+    key:'design', label:'Design', name:'UI/UX Product Design',
+    blurb:'Re-architect a Western checkout grid into Arabic RTL. Mirror what should mirror, and know what must not.',
+    stat:'Figma · RTL · component variants', lead:'dlead', reviewer:'dlead',
+    ticket:{id:'QE-418', pri:'high', title:'Adapt the checkout flow for Arabic RTL',
+      est:'2 days',
+      desc:'The Cairo build ships with the LTR grid mirrored by CSS alone. Icons flip that shouldn\'t, the total row breaks under text expansion, and nobody has specified the rules.'},
+    brief:`<p><b>Context.</b> Checkout for Cairo ships in 6 days. The current build mirrors the layout with <code>direction: rtl</code> and nothing else.</p>
+      <p style="margin-top:10px"><b>Known breakages from the Cairo QA pass:</b></p>
+      <p style="margin-top:8px;line-height:1.8">· The back chevron mirrors correctly. The clock icon and the Vodafone Cash logo also mirror, and should not.<br>
+      · "Complete payment" becomes "إتمام الدفع ٱلآن" and the button clips at 320px.<br>
+      · The order total right-aligns in LTR. In RTL it lands under the label.</p>
+      <p style="margin-top:12px"><b>Deliverable.</b> A written layout spec engineering can implement without asking you follow-up questions.</p>`,
+    delivLabel:'<b>Deliverable — RTL layout spec.</b> Mirroring rules, expansion handling, touch targets. Written so engineering does not need to ask you anything.',
+    draft:`RTL CHECKOUT SPEC
+
+MIRRORING
+- Layout mirrors: use logical properties (padding-inline, margin-inline) instead of left/right
+- Directional icons mirror: back chevron, forward arrow, progress indicator
+- Do not mirror: clock, brand logos, payment provider marks
+
+TEXT EXPANSION
+- Arabic strings run ~30% longer. Buttons use min-width, not fixed width.
+- Line height increased to 1.6 for Arabic to clear diacritics
+
+ALIGNMENT
+- Order total aligns to the inline-end edge, so it flips automatically`,
+    fixNote:'Specify the numbers. Engineering cannot build "increased".',
+    draft2:`RTL CHECKOUT SPEC — v2
+
+MIRRORING RULES
+Mirror (directional meaning):
+- back chevron, forward arrow, step progress bar, swipe affordances
+Never mirror (fixed meaning or brand):
+- clock, Vodafone Cash mark, Fawry mark, card network logos, checkmark
+Implementation: all spacing via padding-inline-start/end and margin-inline-start/end.
+No physical left/right properties anywhere in the checkout tree.
+
+TEXT EXPANSION
+- Assume +35% string length for AR vs EN. Design at the long string, not the short one.
+- Buttons: min-height 48px, min-inline-size 128px, no fixed width, text wraps to 2 lines max
+- Line height AR: 1.6 (vs 1.45 LTR) to clear diacritics on Noto Naskh Arabic
+- "Complete payment" / "إتمام الدفع ٱلآن" validated at 320px, 360px, 412px
+
+ALIGNMENT
+- Order total row: label at inline-start, value at inline-end, both in the same flex row with
+  gap 12px and min-width 0 on the label so it truncates before the value does
+- The value never wraps. The label does.
+
+TOUCH TARGETS
+- All interactive elements minimum 48x48px including the payment method radio rows,
+  which are currently 36px and fail in both directions
+
+OPEN QUESTION FOR ENG
+Does the payment provider SDK render its own iframe? If so the mirroring rules stop at
+that boundary and I need to spec the seam.`,
+    console:[
+      {lv:'INFO', m:'Frame scanned · checkout-ar / 3 breakpoints'},
+      {lv:'ERR',  m:'Touch target below 44px · payment-method-row (36px)'},
+      {lv:'WARN', m:'Fixed width detected · btn-primary (w:180)'},
+      {lv:'WARN', m:'Physical property in spec · "right-aligns"'}
+    ],
+    console2:[
+      {lv:'OK',   m:'All targets ≥48px · 12 elements verified'},
+      {lv:'OK',   m:'No physical direction properties in spec'},
+      {lv:'OK',   m:'Expansion validated at 320 / 360 / 412'},
+      {lv:'INFO', m:'1 open question flagged to engineering — acceptable'}
+    ],
+    fail:{
+      lead:'dlead',
+      open:'The mirroring taxonomy is right and most designers get that wrong, so start from there. But this spec still requires engineering to make three judgment calls, and they will make them differently than you would.',
+      flags:[
+        {t:'"Increased to 1.6" from what?', d:'No LTR baseline. Daniyal will guess, and the guess will be wrong on Android.'},
+        {t:'Touch targets not specified', d:'QA already flagged the payment rows at 36px. Your spec does not mention them, so they will ship at 36px.'},
+        {t:'"Right-aligns" in an RTL spec', d:'You used a physical direction word in the alignment section. That is the exact bug you are fixing.'}
+      ]
+    },
+    pass:{
+      lead:'dlead',
+      open:'This is implementable without a call. The open question at the bottom is the part I want to highlight — you found the seam where your spec stops having authority and you said so instead of hiding it.',
+      flags:[
+        {t:'Numbers, not adjectives', d:'Every rule is measurable and testable.'},
+        {t:'Truncation order specified', d:'Label truncates before value. That decision would otherwise be made by whoever wrote the CSS.'},
+        {t:'Boundary flagged', d:'SDK iframe seam raised before it became a bug.'}
+      ]
+    },
+    dims:[
+      {n:'Technical Precision', s:84, note:'Logical-property discipline was complete by v2. Caught the 36px target the brief did not mention.'},
+      {n:'Scope Management',    s:76, note:'Held the spec to checkout. Did not redesign the cart while in there.'},
+      {n:'Communication',       s:81, note:'The open question to engineering is the strongest single line in the deliverable.'},
+      {n:'Speed under Pressure',s:63, note:'Reworked the whole spec after the pivot rather than amending the payment section.'}
+    ],
+    narrative:`<p>You think in systems, not screens. The mirror / never-mirror taxonomy is the kind of artifact a team keeps using after the ticket closes.</p>
+      <p>Your first draft failed on a specific and fixable habit: you wrote intent where engineering needed values. "Increased", "longer", "right-aligned" all pushed a decision downstream to someone with less context than you. Every one of those became a number in v2 without you being told which ones.</p>
+      <p>When Omar pivoted to wallet-first you rebuilt the spec from the top. It cost you four hours. The payment section was the only part that needed to change.</p>`,
+    artifacts:[
+      {n:'rtl-checkout-spec-v2.md', k:'SPEC', h:'sha256:7d10…4b22'},
+      {n:'checkout-ar · 3 breakpoints', k:'FIG', h:'sha256:2ae9…f051'},
+      {n:'Review thread · 2 revisions', k:'LOG', h:'sha256:c481…19dd'}
+    ]
+  },
+
+  fe:{
+    key:'fe', label:'Engineering', name:'Frontend Engineering',
+    blurb:'Make checkout usable on a 3G connection and a four-year-old Android, without breaking the payment path.',
+    stat:'bundle · lazy load · error boundaries', lead:'tlead', reviewer:'tlead',
+    ticket:{id:'QE-431', pri:'high', title:'Get checkout usable on 3G',
+      est:'2 days',
+      desc:'Checkout ships a 480KB JS bundle. On the Cairo test device (Redmi 9A, throttled 3G) time-to-interactive is 11.2s. Target is under 5s. Do not break the payment path.'},
+    brief:`<p><b>Context.</b> 41% of Cairo sessions arrive on 3G or worse. Checkout currently ships one bundle containing every payment adapter, including the ones that locale will never use.</p>
+      <p style="margin-top:10px"><b>Measured baseline (Redmi 9A, throttled 3G):</b></p>
+      <p style="margin-top:8px;font-family:var(--mono);font-size:11.5px;color:var(--ink-3);line-height:1.8">bundle.js        480 KB<br>time-to-interactive  11.2 s<br>payment adapters     6 loaded / 1 used</p>
+      <p style="margin-top:12px"><b>Deliverable.</b> An optimization plan with the specific changes, expected savings, and the failure mode of each change.</p>`,
+    delivLabel:'<b>Deliverable — optimization plan.</b> Named changes, expected savings, and what breaks if each one goes wrong.',
+    draft:`OPTIMIZATION PLAN
+
+1. Code-split payment adapters
+Dynamic import each adapter, load only the one the locale needs.
+Expected saving: ~180KB
+
+2. Lazy-load the order summary illustration
+Below the fold, not needed for interaction.
+Expected saving: ~40KB
+
+3. Defer analytics
+Move the analytics bundle to requestIdleCallback.
+Expected saving: ~60KB blocking
+
+4. Compress and serve modern formats
+WebP for card art, brotli on the bundle.
+Expected saving: ~35KB`,
+    fixNote:'Every change needs a failure mode. What breaks when the network is bad?',
+    draft2:`OPTIMIZATION PLAN — v2
+
+1. CODE-SPLIT PAYMENT ADAPTERS
+Dynamic import per locale. EG loads vodafone-cash only.
+Saving: ~180KB
+Failure mode: the dynamic import itself fails on a flaky connection and the user
+reaches checkout with no payment method rendered. This is worse than slow.
+Mitigation: wrap in an error boundary with a retry; preload the locale adapter on the
+cart page, not at checkout, so the fetch happens while the user is still browsing.
+
+2. LAZY-LOAD ORDER SUMMARY ILLUSTRATION
+Saving: ~40KB
+Failure mode: layout shift when it arrives late.
+Mitigation: reserve the box with aspect-ratio so CLS stays at 0.
+
+3. DEFER ANALYTICS TO requestIdleCallback
+Saving: ~60KB off the blocking path
+Failure mode: on a loaded device idle never fires and we lose funnel events for the
+exact users we are trying to measure.
+Mitigation: 3s timeout fallback, and mark checkout_started as a beacon, not a script call.
+
+4. MODERN FORMATS + BROTLI
+Saving: ~35KB
+Failure mode: none material. Redmi 9A supports both.
+
+NOT DOING
+Route-level splitting of the checkout shell. It saves ~25KB and adds a second
+round trip on the slowest connections, which is the wrong trade for this user.
+
+PROJECTED: 480KB -> ~165KB, TTI 11.2s -> ~4.1s on the test device.`,
+    console:[
+      {lv:'INFO', m:'Build analyzed · bundle.js 480.2 KB'},
+      {lv:'WARN', m:'6 payment adapters bundled · 1 reachable for locale=EG'},
+      {lv:'ERR',  m:'No error boundary on dynamic import path'},
+      {lv:'WARN', m:'Analytics 62 KB on blocking path'}
+    ],
+    console2:[
+      {lv:'OK',   m:'Error boundary present on adapter import'},
+      {lv:'OK',   m:'Preload moved to cart route · fetch off critical path'},
+      {lv:'OK',   m:'CLS reserved via aspect-ratio'},
+      {lv:'INFO', m:'Projected TTI 4.1s · target 5.0s · PASS'}
+    ],
+    fail:{
+      lead:'tlead',
+      open:'The savings math is right and the four changes are the four I would pick. I am rejecting it because it is a plan for a good network.',
+      flags:[
+        {t:'Dynamic import has no failure path', d:'On a 3G connection that import will fail sometimes. When it does, the user is standing in checkout with no way to pay. You have made the worst case worse.'},
+        {t:'No layout-shift mitigation', d:'Lazy-loading a fixed-size image without reserving the box moves the pay button under the user\'s thumb as it loads.'},
+        {t:'Nothing is ruled out', d:'A plan that only lists what you will do does not tell me what you considered and rejected. Route splitting — why not?'}
+      ]
+    },
+    pass:{
+      lead:'tlead',
+      open:'This is the version I would ship. Preloading the adapter on the cart route instead of checkout is a better idea than the one I had in my head when I wrote the ticket.',
+      flags:[
+        {t:'Failure modes named per change', d:'Every optimization states what breaks and how it is contained.'},
+        {t:'Explicit non-goal', d:'Route splitting rejected with a stated reason. Reviewable.'},
+        {t:'Measurement preserved', d:'Beacon fallback keeps funnel data for slow-network users specifically.'}
+      ]
+    },
+    dims:[
+      {n:'Technical Precision', s:88, note:'Preload-on-cart was not in the brief. Correct instinct on the beacon fallback.'},
+      {n:'Scope Management',    s:80, note:'Explicit non-goal section. Did not gold-plate.'},
+      {n:'Communication',       s:69, note:'v1 read as a list rather than an argument. v2 explains reasoning.'},
+      {n:'Speed under Pressure',s:74, note:'Handled the Sentinel regression inside the 30-minute window without abandoning the ticket.'}
+    ],
+    narrative:`<p>You optimize for the happy path first and the failure path second, and on this product the failure path is the product. That is the whole note.</p>
+      <p>Your first plan would have shipped a checkout that is fast when the network is fine and completely broken when it is not — for users who are on 3G by definition. Once that was named you fixed it thoroughly and found a better preload strategy than the ticket suggested, which is why the technical score is where it is.</p>
+      <p>The regression Sentinel dropped mid-sprint cost you 22 minutes and you kept the ticket moving. That is worth noting.</p>`,
+    artifacts:[
+      {n:'perf-plan-checkout-v2.md', k:'DOC', h:'sha256:8c14…70bd'},
+      {n:'PR #2841 · adapter code-split', k:'PR', h:'sha256:e5a2…41c8'},
+      {n:'Review thread · 2 revisions', k:'LOG', h:'sha256:33fb…9a20'}
+    ]
+  }
+};
+
+/* Track-specific interruption copy */
+const EVENTS = {
+  pivot:{
+    who:'stake', ch:'sprint-3', kind:'crit', label:'Critical shift',
+    pm:'Board call just ended. We are going <strong>wallet-first for Egypt</strong>, not card-first. Vodafone Cash is the priority. Same ship date.',
+    design:'Board call just ended. Egypt goes <strong>wallet-first</strong>. That means Vodafone Cash and Fawry marks in the payment list, not card logos. Same ship date.',
+    fe:'Board call just ended. Egypt goes <strong>wallet-first</strong>. The wallet adapter is now the one that has to be fast. Same ship date.',
+    toast:'Omar Farouk changed the sprint direction'
+  },
+  incident:{
+    who:'qa', ch:'incidents', kind:'warn', label:'Production recon',
+    pm:'Regression on the EG checkout funnel. Completion dropped <code>4.1%</code> in the last hour on wallet-flagged sessions. Someone needs to decide if this blocks the sprint.',
+    design:'Regression detected. The payment method rows are rendering at <code>36px</code> on the Cairo build and failing tap accuracy at <code>11.4%</code>. Spec needs to cover it.',
+    fe:'Regression on <code>payment-webhook.handler</code> in EG. Unhandled rejection when the adapter import 404s. <strong>30-minute hotfix window.</strong>',
+    toast:'Sentinel flagged a production regression'
+  },
+  deadline:{
+    who:'sys', ch:'sprint-3', kind:'info', label:'Deadline',
+    pm:'Sprint 3 closes in <strong>24 hours</strong>. QE-402 is your only mandatory ticket.',
+    design:'Sprint 3 closes in <strong>24 hours</strong>. QE-418 is your only mandatory ticket.',
+    fe:'Sprint 3 closes in <strong>24 hours</strong>. QE-431 is your only mandatory ticket.',
+    toast:'24 hours left in Sprint 3'
+  }
+};
+
+/* ═══════════════ STATE ═══════════════ */
+let S = {track:null, T:null, status:'BACKLOG', revision:1, submits:0,
+         eventIdx:0, ledger:[], timers:[], accepted:false,
+         pivotFiredAt:null, lastReview:null, finalScores:null, finalNarrative:null,
+         lastSubmissionText:'', priorFeedbackSummary:null};
+const EVENT_ORDER = ['pivot','incident','deadline'];
+
+/* ═══════════════ LIVE AI AGENTS (via our own backend) ═══════════════
+   No system prompts and no API key live in this file — they live server-side
+   in agents.js / server.js. This file only talks to our own /api/* routes.
+   Who you are and which sprint this is comes from your login session
+   (a cookie) plus your active, checked-in sprint row in the database —
+   nothing here is passed a raw session id by the client anymore. Each
+   agent's memory is kept per-sprint on the server, independent of the others. */
+
+function csrfToken(){
+  const m = document.cookie.match(/(?:^|; )kleos\.csrf=([^;]*)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
+async function apiPost(url, body){
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json', 'X-CSRF-Token': csrfToken()},
+    body: JSON.stringify(body)
+  });
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error || ('request_failed_'+res.status));
+  return data;
+}
+
+async function agentSay(key, userText, maxTokens=220){
+  const data = await apiPost('/api/chat', { agent:key, message:userText, maxTokens });
+  return data.reply;
+}
+
+async function fireAgentEvent(key, instruction, maxTokens=150){
+  const data = await apiPost('/api/event', { agent:key, instruction, maxTokens });
+  return data.body;
+}
+
+async function reviewPRD(submissionText, ctx){
+  return apiPost('/api/review', {
+    brief: ctx.brief,
+    pivotFired: ctx.pivotFired,
+    revision: ctx.revision,
+    priorFeedback: ctx.priorFeedback,
+    submissionText
+  });
+}
+
+async function requestNarrative(transcriptSummary){
+  const data = await apiPost('/api/narrative', { transcriptSummary });
+  return data.narrative;
+}
+
+function stripHtml(html){
+  const d=document.createElement('div'); d.innerHTML=html; return d.textContent.trim();
+}
+
+async function sha256Hex(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function showTyping(who){
+  const p=PEOPLE[who]; const feed=$('#feed');
+  if($('#typing-'+who)) return;
+  const t=document.createElement('div');
+  t.className='typing'; t.id='typing-'+who;
+  t.innerHTML=`<div class="av" style="background:${p.c}">${p.i}</div><div class="bubble"><i></i><i></i><i></i></div>`;
+  feed.appendChild(t); scrollFeed();
+}
+function hideTyping(who){ const t=$('#typing-'+who); if(t) t.remove(); }
+
+
+const $ = s=>document.querySelector(s);
+const $$ = s=>[...document.querySelectorAll(s)];
+const esc = s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function clock(){const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
+function later(fn,ms){const t=setTimeout(fn,ms);S.timers.push(t);return t;}
+function clearTimers(){S.timers.forEach(clearTimeout);S.timers=[];}
+
+/* ═══════════════ SCREEN 1 ═══════════════ */
+// This screen only ever runs in scripted-preview mode now (?preview=1) —
+// real Product Management runs through the authenticated live flow
+// (initGate → liveEnterWorkspace), not through boot()/TRACKS.pm. Excluded
+// here so a preview visitor can't hit dead live-mode code paths.
+const trackEls = Object.values(TRACKS).filter(t=>t.key!=='pm').map((t,i)=>`
+  <button class="track" data-track="${t.key}">
+    <div class="num">TRACK 0${i+1} · scripted preview</div>
+    <h3>${t.name}</h3>
+    <p>${t.blurb}</p>
+    <div class="meta"><span>${t.stat}</span><span class="go">Enter →</span></div>
+  </button>`).join('');
+$('#tracks').innerHTML = trackEls;
+$$('.track').forEach(el=>el.onclick=()=>boot(el.dataset.track));
+
+/* ═══════════════ SCREEN 2: BOOT ═══════════════ */
+async function boot(key){
+  S.track=key; S.T=TRACKS[key];
+  show('screen-boot');
+  const lines=[
+    ['Authenticating', 'kleos.session · verified'],
+    ['Provisioning workspace', 'meridian-'+key+'-ws01'],
+    ['Loading company context', 'Meridian · checkout · MENA + SA'],
+    ['Instantiating team', '4 agents · PM, Lead, QA, Stakeholder'],
+    ['Scheduling sprint', 'Sprint 3 · 10 days · day 4'],
+    ['Opening backlog', '3 tickets · 1 mandatory']
+  ];
+  const b=$('#boot'); b.innerHTML='';
+  lines.forEach((l,i)=>{
+    const d=document.createElement('div');
+    d.className='boot-line'; d.style.animationDelay=(i*0.42)+'s';
+    d.innerHTML=`<span class="ok">✓</span><span style="flex:1">${l[0]}</span><span class="val">${l[1]}</span>`;
+    b.appendChild(d);
+  });
+  const bar=document.createElement('div'); bar.className='boot-bar'; bar.innerHTML='<i></i>'; b.appendChild(bar);
+
+  later(()=>enterWorkspace(), 3500);
+}
+
+function show(id){$$('.screen').forEach(s=>s.classList.remove('on'));$('#'+id).classList.add('on');}
+
+/* ═══════════════ AUTH + CHECK-IN GATE ═══════════════
+   This page is the workspace itself — it is only reachable by a signed-in
+   user with an active, checked-in sprint (unless ?preview=1 is set, which
+   runs the old fully-scripted, no-account demo for the not-yet-live
+   Design/Frontend tracks — see the PREVIEW MODE section near the bottom).
+   Everything else (accounts, picking a role/duration/pace, checking in)
+   happens on /dashboard.html. This gate is a UX convenience, not the real
+   security boundary — every /api/workspace, /api/messages/*, /api/ticket/*
+   call is independently guarded server-side by the same auth+checked-in
+   check. */
+let ACTIVE_SPRINT = null;
+let timerPoll = null;
+
+async function apiGet(url){
+  const res = await fetch(url);
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error || ('request_failed_'+res.status));
+  return data;
+}
+
+async function initGate(){
+  if(new URLSearchParams(location.search).get('preview')){ show('screen-select'); return; }
+
+  let me;
+  try{ me = await apiGet('/api/auth/me'); } catch(e){ location.href='/login.html'; return; }
+  if(!me.user){ location.href='/login.html'; return; }
+
+  let cur;
+  try{ cur = await apiGet('/api/sprint/current'); } catch(e){ location.href='/dashboard.html'; return; }
+  if(!cur.sprint || !cur.status || cur.status.completed || !cur.status.checkedIn){
+    location.href='/dashboard.html'; return;
+  }
+
+  ACTIVE_SPRINT = cur.sprint;
+  show('screen-work');
+  await liveEnterWorkspace();
+  startTimerBar(cur.status);
+  if (me.user.onboardingSeen === false) showFirstVisitTour();
+}
+
+function showFirstVisitTour() {
+  const overlay = $('#tour-overlay');
+  overlay.classList.remove('hidden');
+  $('#tour-dismiss').onclick = async () => {
+    overlay.classList.add('hidden');
+    try { await apiPost('/api/account/onboarding-seen', {}); } catch (e) { /* not critical if this fails once */ }
+  };
+}
+
+function fmtHMS(totalSeconds){
+  const neg = totalSeconds<0; const s=Math.abs(Math.round(totalSeconds));
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+  return (neg?'+':'')+[h,m,sec].map(n=>String(n).padStart(2,'0')).join(':');
+}
+function updateTimerChip(status){
+  $('#tb-timer-text').textContent = fmtHMS(status.remainingSeconds);
+  $('#tb-timer-dot').className = 'dot'+(status.overtime?' amber':'');
+  $('#tb-timer').style.color = status.overtime ? 'var(--red)' : 'var(--ink)';
+  $('#tb-days').textContent = 'Day '+(status.dayIndex+1)+' of '+status.totalWorkDays;
+}
+function startTimerBar(initialStatus){
+  updateTimerChip(initialStatus);
+  clearInterval(timerPoll);
+  timerPoll = setInterval(pollStatus, 5000);
+}
+async function pollStatus(){
+  try{
+    const data = await apiGet('/api/sprint/status');
+    if(!data.status || !data.status.checkedIn){
+      clearInterval(timerPoll);
+      toast('info','Checked out','Your work day ended. Heading back to the dashboard.');
+      later(()=>location.href='/dashboard.html', 1400);
+      return;
+    }
+    updateTimerChip(data.status);
+  }catch(e){ /* transient network issue — try again next tick */ }
+}
+if($('#tb-checkout')) $('#tb-checkout').onclick = async ()=>{
+  clearInterval(timerPoll);
+  try{ await apiPost('/api/sprint/checkout', {}); }catch(e){}
+  location.href='/dashboard.html';
+};
+
+/* ═══════════════ SCREEN 3: WORKSPACE ═══════════════ */
+// Static workspace chrome (roster, backlog, ticket brief) — shared by a
+// fresh boot and a resumed (checked-back-in) session, since neither should
+// re-run the onboarding chat script on a resume.
+function setupWorkspaceChrome(){
+  const T=S.T;
+  $('#tb-track').textContent='· '+T.label;
+
+  const roster = ['pm', T.reviewer==='dlead'?'dlead':'tlead', 'qa', 'stake']
+    .filter((v,i,a)=>a.indexOf(v)===i);
+  $('#team').innerHTML = roster.map(k=>{
+    const p=PEOPLE[k];
+    return `<div class="member" data-p="${k}">
+      <div class="ring ${k==='stake'?'idle':''}" id="ring-${k}">
+        <div class="av" style="background:${p.c}">${p.i}</div>
+      </div>
+      <div class="nm"><b>${p.n}</b><span>${p.t}</span></div>
+    </div>`;
+  }).join('') + `<div class="member">
+      <div class="ring"><div class="av" style="background:var(--bronze)">YOU</div></div>
+      <div class="nm"><b>You</b><span>${T.label} · Sprint 3</span></div>
+    </div>`;
+
+  const tk=T.ticket;
+  const filler=[
+    {id:'QE-407', pri:'low',  title:'Update the payment method icons to the new set', desc:'Blocked on brand. Not this sprint.'},
+    {id:'QE-412', pri:'med',  title:'Write the Sprint 3 demo script', desc:'Needed by Friday. Anyone can pick this up.'}
+  ];
+  $('#backlog').innerHTML = `
+    <div class="tk">
+      <div class="tk-top"><span class="tk-id">${tk.id}</span><span class="pri ${tk.pri}">MANDATORY</span></div>
+      <h4>${tk.title}</h4>
+      <div class="desc">${tk.desc}</div>
+      <div class="est">Estimate ${tk.est} · assigned to you</div>
+      <button class="btn" id="btn-accept">Accept assignment</button>
+    </div>` + filler.map(f=>`
+    <div class="tk locked">
+      <div class="tk-top"><span class="tk-id">${f.id}</span><span class="pri ${f.pri}">${f.pri.toUpperCase()}</span></div>
+      <h4>${f.title}</h4>
+      <div class="desc">${f.desc}</div>
+      <div class="est">Unassigned</div>
+    </div>`).join('');
+  $('#btn-accept').onclick=acceptTicket;
+
+  $('#act-id').textContent=tk.id;
+  $('#act-title').textContent=tk.title;
+  $('#brief-body').innerHTML=T.brief;
+  $('#deliv-label').innerHTML=T.delivLabel;
+}
+
+function enterWorkspace(){
+  const T=S.T;
+  show('screen-work');
+  setupWorkspaceChrome();
+  if(T.live){
+    later(()=>toast('info','Live AI sprint','Yusra, Omar, Sentinel, and Daniyal are real language-model agents in this track. Replies take a few seconds.'), 900);
+  }
+
+  // onboarding messages
+  $('#feed').innerHTML='';
+  const tk=T.ticket;
+  const lead=PEOPLE[T.reviewer];
+  seq([
+    {d:600, who:'pm', txt:`Morning — you're on the checkout squad for Sprint 3. Quick context before you pick anything up.<div class="callout info"><span class="k">Company context</span>Meridian is the checkout layer for about 4,000 merchants across Egypt, Saudi and Pakistan. Most of our buyers are on mid-tier Android over patchy mobile data. If checkout is slow or confusing, they don't retry — they close the tab.</div>`},
+    {d:1500, who:T.reviewer, txt:`${lead.t==='Design Director'?'Design':'Engineering'} guidelines are pinned in <code>#general</code>. Two rules that matter more than the rest here: <strong>ship partial over late</strong>, and if you're blocked for more than an hour, say so in channel rather than quietly working around it.`},
+    {d:1400, who:'qa', txt:`Automated checks run on every submission. I also drop production incidents when they happen, which is not on a schedule.`},
+    {d:1200, who:'pm', txt:`Your ticket is <code>${tk.id}</code>, in the panel on the right. Accept it when you're ready and the sandbox opens.`}
+  ]);
+
+  startEventClock();
+  renderLedger();
+}
+
+/* ═══════════════ LIVE MODE (real accounts, real server state) ═══════════════
+   Everything below talks to /api/workspace, /api/messages/:channel and
+   /api/ticket/*. The ticket bank (13+ tickets), the day-to-day hiccups
+   (pivots/incidents/deadline shifts), and channel history all live on the
+   server (content.js) — this is just rendering + a thin client. */
+let LIVE = { channels:[], dms:[], team:[], activeChannel:null, ticket:null, ticketState:null, huddle:null };
+
+async function liveEnterWorkspace(){
+  const ws = await apiGet('/api/workspace');
+  LIVE.ticket = ws.ticket;
+  LIVE.ticketState = ws.ticketState;
+  LIVE.channels = ws.channels;
+  LIVE.dms = ws.dms;
+  LIVE.team = ws.team;
+  LIVE.huddle = ws.huddle;
+
+  $('#tb-track').textContent = '· Product';
+  $('#btn-submit').onclick = liveSubmitTicket;
+  $('#btn-fill').style.display = 'none'; // no canned draft text in live mode
+
+  renderLiveSidebar();
+  renderLiveTicketPanel();
+
+  const startChannel = LIVE.channels.find(c=>c.key===ws.ticket.channel) ? ws.ticket.channel : 'general';
+  await liveSwitchChannel(startChannel);
+}
+
+function renderLiveSidebar(){
+  const banner = $('#huddle-banner');
+  if(LIVE.huddle && LIVE.huddle.isHuddleDay && !LIVE.huddle.userSpoke){
+    banner.style.display = 'block';
+    const missed = LIVE.huddle.missedCount || 0;
+    const missedNote = missed > 0 ? `<br><span style="color:var(--red)">You've missed ${missed} previous huddle${missed>1?'s':''}.</span>` : '';
+    banner.innerHTML = '<b>Daily huddle is live.</b><br>Join to hear updates and give yours.' + missedNote;
+  } else {
+    banner.style.display = 'none';
+  }
+
+  $('#channel-list').innerHTML = LIVE.channels.map(c=>`
+    <div class="chan ${c.key===LIVE.activeChannel?'active':''} ${c.unread?'has-ping':''}" data-ch="${c.key}">
+      <span class="hash">#</span>${c.key}<span class="ping">•</span>
+    </div>`).join('');
+  $$('#channel-list .chan').forEach(el=>el.onclick=()=>liveSwitchChannel(el.dataset.ch));
+
+  $('#dm-head').style.display = 'block';
+  $('#dm-list').innerHTML = LIVE.dms.map(d=>{
+    const p = PEOPLE[d.agentKey];
+    return `<div class="chan ${d.key===LIVE.activeChannel?'active':''}" data-ch="${d.key}" style="gap:8px">
+      <div class="av" style="background:${p.c};width:16px;height:16px;font-size:7.5px;flex:0 0 auto">${p.i}</div>
+      <span>${p.n}</span>
+    </div>`;
+  }).join('');
+  $$('#dm-list .chan').forEach(el=>el.onclick=()=>liveSwitchChannel(el.dataset.ch));
+
+  $('#presence-note').textContent = '';
+  $('#team').innerHTML = LIVE.team.map(t=>{
+    const p = PEOPLE[t.key];
+    return `<div class="member" data-p="${t.key}">
+      <div class="ring" id="ring-${t.key}"><div class="av" style="background:${p.c}">${p.i}</div></div>
+      <div class="nm"><b>${p.n}</b><span>${p.t}</span></div>
+    </div>`;
+  }).join('') + `<div class="member">
+      <div class="ring"><div class="av" style="background:var(--bronze)">YOU</div></div>
+      <div class="nm"><b>You</b><span>Product · this run</span></div>
+    </div>`;
+}
+
+function liveSetStatus(s){
+  const el=$('#act-status');
+  const map={IN_PROGRESS:['prog','IN PROGRESS'],IN_REVIEW:['review','IN REVIEW'],QA_FAILED:['fail','QA FAILED'],DONE:['done','DONE']};
+  const m = map[s] || map.IN_PROGRESS;
+  el.className='st '+m[0]; el.textContent=m[1];
+}
+
+function renderLiveTicketPanel(){
+  const t = LIVE.ticket, st = LIVE.ticketState;
+  $('#act-id').textContent = t.id;
+  $('#act-title').textContent = t.title;
+  $('#brief-body').innerHTML = t.brief;
+  $('#deliv-label').innerHTML = t.delivLabel;
+  $('#act-rev').textContent = 'Revision '+st.revision;
+  if($('#deliv').value==='' ) $('#deliv').value = st.status==='QA_FAILED' ? st.lastSubmissionText||'' : '';
+
+  const due = new Date(st.dueAt);
+  $('#act-timer').textContent = 'Due ' + due.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+
+  if(st.accepted){
+    $('#view-backlog').style.display='none';
+    $('#view-active').style.display='block';
+    liveSetStatus(st.status);
+    lockComposer(st.status==='IN_REVIEW');
+    $('#act-prog').style.width = st.status==='DONE' ? '100%' : (st.submits>=1?'58%':'22%');
+    $('#btn-submit').disabled = st.status==='DONE';
+  } else {
+    $('#view-backlog').style.display='block';
+    $('#view-active').style.display='none';
+    $('#bk-count').textContent='1 open';
+    $('#backlog').innerHTML = `
+      <div class="tk">
+        <div class="tk-top"><span class="tk-id">${t.id}</span><span class="pri ${t.pri}">MANDATORY</span></div>
+        <h4>${t.title}</h4>
+        <div class="desc">${t.desc}</div>
+        <div class="est">Estimate ${t.est} · assigned to you</div>
+        <button class="btn" id="btn-accept">Accept assignment</button>
+      </div>`;
+    $('#btn-accept').onclick = liveAcceptTicket;
+  }
+}
+
+async function liveAcceptTicket(){
+  const r = await apiPost('/api/ticket/accept', {});
+  LIVE.ticketState = r.ticketState;
+  renderLiveTicketPanel();
+  toast('info','Ticket accepted', LIVE.ticket.id+' is locked to your profile. The sandbox is live.');
+  await liveSwitchChannel(LIVE.ticket.channel);
+}
+
+async function liveSubmitTicket(){
+  const text = $('#deliv').value.trim();
+  if(!text){ toast('warn','Nothing to submit','Write your deliverable in the sandbox before submitting.'); return; }
+  liveSetStatus('IN_REVIEW');
+  lockComposer(true);
+  $('#btn-submit').disabled = true;
+  toast('info','Submitted for review', 'Your reviewer is reading your work. Input is locked.');
+  try{
+    const r = await apiPost('/api/ticket/submit', { text });
+    const ws = await apiGet('/api/workspace');
+    LIVE.ticket = ws.ticket; LIVE.ticketState = ws.ticketState; LIVE.channels = ws.channels; LIVE.huddle = ws.huddle;
+    renderLiveSidebar();
+    renderLiveTicketPanel();
+    await liveSwitchChannel(r.channel);
+    if(r.verdict.verdict==='pass'){
+      toast('good','Ticket accepted', 'Your reviewer closed the ticket. Next assignment lands on your next check-in.');
+    } else {
+      toast('crit','Review failed','Blocking issues left in the channel. Revise and resubmit.');
+    }
+  }catch(e){
+    liveSetStatus('IN_PROGRESS');
+    lockComposer(false);
+    $('#btn-submit').disabled = false;
+    toast('crit','Review failed to load', e.message || 'Connection issue — resubmit when ready.');
+  }
+}
+
+async function liveSwitchChannel(channelKey){
+  LIVE.activeChannel = channelKey;
+  $$('#channel-list .chan, #dm-list .chan').forEach(el=>{
+    const active = el.dataset.ch===channelKey;
+    el.classList.toggle('active', active);
+    if(active) el.classList.remove('has-ping');
+  });
+  const isDM = channelKey.startsWith('dm-');
+  const dmAgent = isDM ? channelKey.slice(3) : null;
+  $('#ch-title').textContent = isDM ? PEOPLE[dmAgent].n : '# '+channelKey;
+  $('#ch-sub').textContent = isDM ? PEOPLE[dmAgent].t : (channelKey===LIVE.ticket.channel ? LIVE.ticket.title : '');
+  $('#chat-in').placeholder = 'Message ' + (isDM ? PEOPLE[dmAgent].n : '#'+channelKey);
+
+  $('#feed').innerHTML = '';
+  try{
+    const data = await apiGet('/api/messages/'+encodeURIComponent(channelKey));
+    data.messages.forEach(m=>{
+      if(m.author_key==='user'){
+        postMsg('sys', '<strong>You</strong> · '+m.body, 'system');
+      } else {
+        postMsg(m.author_key, m.body);
+      }
+    });
+  }catch(e){ /* channel history failed to load — leave the feed empty rather than crash */ }
+  scrollFeed();
+}
+
+async function liveSendChat(){
+  const i=$('#chat-in'); const v=i.value.trim();
+  if(!v || chatBusy || !LIVE.activeChannel) return;
+  postMsg('sys','<strong>You</strong> · '+esc(v),'system');
+  i.value=''; i.style.height='auto';
+
+  const who = LIVE.activeChannel.startsWith('dm-') ? LIVE.activeChannel.slice(3)
+    : (LIVE.activeChannel==='incidents' ? 'qa' : (/omar|stake|wallet|pivot|priorit|contradict/i.test(v) ? 'stake' : 'pm'));
+  chatBusy=true;
+  showTyping(who);
+  try{
+    const r = await apiPost('/api/messages/'+encodeURIComponent(LIVE.activeChannel), { text:v });
+    hideTyping(who);
+    postMsg(r.agentKey, esc(r.reply).replace(/\n/g,'<br>'));
+  }catch(e){
+    hideTyping(who);
+    toast('warn','Message not delivered', (PEOPLE[who]?PEOPLE[who].n:'They')+" didn't respond — "+(e.message||'connection issue')+'. Try again.');
+  }finally{
+    chatBusy=false;
+  }
+}
+
+/* message rendering */
+function seq(items){
+  let acc=0;
+  items.forEach(it=>{
+    acc+=it.d;
+    later(()=>typeThen(it.who,it.txt), acc);
+  });
+}
+function typeThen(who,txt,ms=850){
+  const p=PEOPLE[who];
+  const feed=$('#feed');
+  const t=document.createElement('div');
+  t.className='typing';
+  t.innerHTML=`<div class="av" style="background:${p.c}">${p.i}</div><div class="bubble"><i></i><i></i><i></i></div>`;
+  feed.appendChild(t); scrollFeed();
+  later(()=>{t.remove(); postMsg(who,txt);}, ms);
+}
+function postMsg(who,txt,cls=''){
+  const p=PEOPLE[who];
+  const feed=$('#feed');
+  const m=document.createElement('div');
+  m.className='msg '+cls;
+  m.innerHTML=`<div class="av" style="background:${p.c}">${p.i}</div>
+    <div class="body">
+      <div class="hdr"><b>${p.n}</b><span class="role">${p.r}</span><time>${clock()}</time></div>
+      <div class="txt">${txt}</div>
+    </div>`;
+  feed.appendChild(m); scrollFeed();
+}
+function scrollFeed(){const f=$('#feed');f.scrollTop=f.scrollHeight;}
+
+/* ledger */
+function ledger(text){
+  S.ledger.push({t:clock(), d:text});
+  renderLedger();
+}
+function renderLedger(){
+  const el=$('#ledger');
+  if(!S.ledger.length){el.innerHTML='<div class="ledger-empty">Nothing witnessed yet.</div>';return;}
+  el.innerHTML=S.ledger.map(l=>`<div class="ldg"><span class="t">${l.t}</span><span>${l.d}</span></div>`).join('');
+  el.scrollTop=el.scrollHeight;
+  $('#ldg-count').textContent=S.ledger.length;
+}
+
+/* toasts */
+function toast(kind,head,body){
+  const t=document.createElement('div');
+  t.className='toast '+kind;
+  t.innerHTML=`<div class="th">${head}</div><div class="tb">${body}</div>`;
+  $('#toasts').appendChild(t);
+  later(()=>{t.classList.add('out'); later(()=>t.remove(),320);},5200);
+}
+
+/* channel pings */
+function ping(ch){
+  const el=$(`.chan[data-ch="${ch}"]`);
+  if(el && !el.classList.contains('active')) el.classList.add('has-ping');
+}
+$$('.chan').forEach(c=>c.onclick=()=>{
+  $$('.chan').forEach(x=>x.classList.remove('active'));
+  c.classList.add('active'); c.classList.remove('has-ping');
+  $('#ch-title').textContent='# '+c.dataset.ch;
+});
+
+/* ═══════════════ TICKET LIFECYCLE ═══════════════ */
+function acceptTicket(){
+  S.accepted=true; S.status='IN_PROGRESS';
+  $('#view-backlog').style.display='none';
+  $('#view-active').style.display='block';
+  $('#act-prog').style.width='22%';
+  $('#tb-status').innerHTML='<span class="dot amber"></span><b>'+S.T.ticket.id+' in progress</b>';
+  ledger('Accepted '+S.T.ticket.id);
+  toast('info','Ticket accepted', S.T.ticket.id+' is locked to your profile. The sandbox is live.');
+  typeThen('pm', `Locked to you. The brief tab has everything, including the raw input.<div class="callout warn"><span class="k">Before you start</span>Ask me one question now if anything is ambiguous. It is cheaper than a rejected review.</div>`, 900);
+  streamConsole(S.T.console, 1800);
+}
+
+function streamConsole(lines, delay=0){
+  const c=$('#console');
+  lines.forEach((l,i)=>{
+    later(()=>{
+      const d=document.createElement('div');
+      d.className='cl '+l.lv.toLowerCase();
+      d.innerHTML=`<span class="lv">${l.lv}</span><span class="m">${l.m}</span>`;
+      c.appendChild(d); c.scrollTop=c.scrollHeight;
+      if(l.lv==='ERR'||l.lv==='WARN'){
+        const b=$('#con-badge'); if(!$('.stab[data-pane="console"]').classList.contains('on')) b.style.display='inline-block';
+      }
+    }, delay + i*520);
+  });
+}
+
+/* tabs */
+$$('.stab').forEach(b=>b.onclick=()=>{
+  $$('.stab').forEach(x=>x.classList.remove('on'));
+  $$('.spane').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); $('#pane-'+b.dataset.pane).classList.add('on');
+  if(b.dataset.pane==='console') $('#con-badge').style.display='none';
+});
+
+/* draft fill */
+$('#btn-fill').onclick=()=>{
+  const d=$('#deliv');
+  d.value = S.submits===0 ? S.T.draft : S.T.draft2;
+  d.scrollTop=0;
+  $('#btn-fill').textContent = S.submits===0 ? 'Paste draft' : 'Paste revision';
+};
+
+/* submit */
+$('#btn-submit').onclick=async ()=>{
+  const text = $('#deliv').value.trim();
+  if(!text){
+    toast('warn','Nothing to submit','Write something in the sandbox, or use Paste draft for the demo.');
+    return;
+  }
+  S.submits++;
+  setStatus('IN_REVIEW');
+  lockComposer(true);
+  setRing(S.T.reviewer,'busy');
+  $('#act-prog').style.width = S.submits===1 ? '58%' : '100%';
+  ledger('Submitted '+S.T.ticket.id+' · rev '+S.revision);
+  toast('info','Submitted for review', PEOPLE[S.T.reviewer].n+' is reading your work. Input is locked.');
+  postMsg('sys', `<strong>You</strong> submitted <code>${S.T.ticket.id}</code> for review · revision ${S.revision}`, 'system');
+
+  if(!S.T.live){
+    later(()=>{ S.submits===1 ? reviewFail() : reviewPass(); }, 3400);
+    return;
+  }
+
+  S.lastSubmissionText = text;
+  try{
+    const verdict = await reviewPRD(text, {
+      brief: stripHtml(S.T.brief),
+      pivotFired: !!S.pivotFiredAt,
+      revision: S.revision,
+      priorFeedback: S.priorFeedbackSummary
+    });
+    S.lastReview = verdict;
+    if(verdict.verdict==='pass'){ await liveReviewPass(verdict); } else { liveReviewFail(verdict); }
+  }catch(e){
+    setStatus('IN_PROGRESS'); lockComposer(false); setRing(S.T.reviewer,'');
+    toast('crit','Review failed to load', PEOPLE[S.T.reviewer].n+' could not review this \u2014 connection issue. Resubmit when ready.');
+  }
+};
+
+function liveReviewFail(verdict){
+  setRing(S.T.reviewer,'');
+  setStatus('QA_FAILED');
+  lockComposer(false);
+  S.priorFeedbackSummary = verdict.opening+' '+verdict.flags.map(f=>f.title+': '+f.detail).join(' ');
+  S.revision=2;
+  $('#act-rev').textContent='Revision 2';
+  $('#btn-fill').textContent='Paste revision';
+  const flags = verdict.flags.map(f=>({t:esc(f.title), d:esc(f.detail)}));
+  typeThen(S.T.reviewer, esc(verdict.opening).replace(/\n/g,'<br>') + rubricHTML(flags,'fail') +
+    `<div class="callout warn" style="margin-top:11px"><span class="k">Status</span>Ticket moved to <code>QA_FAILED</code>. Your input is unlocked. Revise and resubmit — the clock did not stop.</div>`, 1000);
+  toast('crit','Review failed','3 blocking issues. '+PEOPLE[S.T.reviewer].n+' left specifics in channel.');
+  ledger('QA_FAILED · 3 blocking issues');
+  ping('sprint-3');
+  $('#con-badge').style.display='inline-block';
+}
+
+async function liveReviewPass(verdict){
+  setRing(S.T.reviewer,'');
+  setStatus('DONE');
+  lockComposer(false);
+  $('#btn-submit').disabled=true;
+  const flags = verdict.flags.map(f=>({t:esc(f.title), d:esc(f.detail)}));
+  typeThen(S.T.reviewer, esc(verdict.opening).replace(/\n/g,'<br>') + rubricHTML(flags,'pass') +
+    `<div class="callout info" style="margin-top:11px"><span class="k">Status</span>Ticket <code>DONE</code>. All mandatory tickets closed — Sprint 3 will terminate and your record compiles.</div>`, 1100);
+  toast('good','Ticket accepted', PEOPLE[S.T.reviewer].n+' closed the ticket. Sprint graduating.');
+  ledger('Ticket DONE · accepted on rev '+S.revision);
+  $('#tb-status').innerHTML='<span class="dot"></span><b>Sprint complete</b>';
+  S.finalScores = verdict.scores;
+  later(()=>{
+    postMsg('sys','<strong>Sprint 3 closed.</strong> Compiling your performance record and proof-of-work manifest…','system');
+    toast('good','Sprint 3 closed','Opening your record.');
+  },4200);
+  generateNarrative().finally(()=> later(()=>graduate(),7000));
+}
+
+async function generateNarrative(){
+  try{
+    const transcriptSummary = `Ticket ${S.T.ticket.id} — ${S.T.ticket.title}.
+Revisions used: ${S.revision}. Pivot occurred mid-sprint: ${!!S.pivotFiredAt}.
+Final scores: ${JSON.stringify(S.finalScores)}.
+Final submitted text:
+"""${S.lastSubmissionText}"""`;
+    S.finalNarrative = await requestNarrative(transcriptSummary);
+  }catch(e){
+    S.finalNarrative = null;
+  }
+}
+
+function setStatus(s){
+  S.status=s;
+  const el=$('#act-status');
+  const map={IN_PROGRESS:['prog','IN PROGRESS'],IN_REVIEW:['review','IN REVIEW'],
+             QA_FAILED:['fail','QA FAILED'],DONE:['done','DONE']};
+  el.className='st '+map[s][0]; el.textContent=map[s][1];
+}
+function lockComposer(on){
+  $('#composer').classList.toggle('locked',on);
+  $('#btn-submit').disabled=on;
+}
+function setRing(k,cls){
+  const r=$('#ring-'+k); if(!r)return;
+  r.className='ring'+(cls?' '+cls:'');
+}
+
+function rubricHTML(items,type){
+  return `<div class="rubric">
+    <div class="rubric-h"><span>Rubric · ${S.T.ticket.id}</span><span>${type==='fail'?'3 blocking':'3 met'}</span></div>
+    ${items.map(f=>`<div class="rub ${type==='fail'?'fail':'pass'}">
+      <span class="mk">${type==='fail'?'✕':'✓'}</span>
+      <span class="rt"><b>${f.t}</b><span>${f.d}</span></span></div>`).join('')}
+  </div>`;
+}
+
+function reviewFail(){
+  setRing(S.T.reviewer,'');
+  setStatus('QA_FAILED');
+  lockComposer(false);
+  S.revision=2;
+  $('#act-rev').textContent='Revision 2';
+  $('#btn-fill').textContent='Paste revision';
+  $('#deliv-hint').innerHTML=S.T.fixNote;
+  const f=S.T.fail;
+  typeThen(f.lead, f.open + rubricHTML(f.flags,'fail') +
+    `<div class="callout warn" style="margin-top:11px"><span class="k">Status</span>Ticket moved to <code>QA_FAILED</code>. Your input is unlocked. Revise and resubmit — the clock did not stop.</div>`, 1000);
+  toast('crit','Review failed','3 blocking issues. '+PEOPLE[f.lead].n+' left specifics in channel.');
+  ledger('QA_FAILED · 3 blocking issues');
+  ping('sprint-3');
+  $('#con-badge').style.display='inline-block';
+}
+
+function reviewPass(){
+  setRing(S.T.reviewer,'');
+  setStatus('DONE');
+  lockComposer(false);
+  $('#btn-submit').disabled=true;
+  const p=S.T.pass;
+  streamConsole(S.T.console2, 400);
+  typeThen(p.lead, p.open + rubricHTML(p.flags,'pass') +
+    `<div class="callout info" style="margin-top:11px"><span class="k">Status</span>Ticket <code>DONE</code>. All mandatory tickets closed — Sprint 3 will terminate and your record compiles.</div>`, 1100);
+  toast('good','Ticket accepted','QE closed on revision 2. Sprint graduating.');
+  ledger('Ticket DONE · accepted on rev 2');
+  $('#tb-status').innerHTML='<span class="dot"></span><b>Sprint complete</b>';
+  later(()=>{
+    postMsg('sys','<strong>Sprint 3 closed.</strong> Compiling your performance record and proof-of-work manifest…','system');
+    toast('good','Sprint 3 closed','Opening your record.');
+  },4200);
+  later(()=>graduate(),7000);
+}
+
+/* chat send */
+let chatBusy=false;
+async function sendChat(){
+  if(ACTIVE_SPRINT) return liveSendChat();
+
+  const i=$('#chat-in'); const v=i.value.trim();
+  if(!v || chatBusy) return;
+  postMsg('sys','<strong>You</strong> · '+esc(v),'system');
+  i.value=''; i.style.height='auto';
+  ledger('Asked a question in channel');
+
+  if(!S.T.live){
+    later(()=>{
+      const who = /omar|scope|priorit|pivot|wallet/i.test(v) ? 'stake' : 'pm';
+      const reply = who==='stake'
+        ? 'Wallet-first. I know I said cards on Tuesday. Numbers changed. Same date though.'
+        : 'Good question to ask before writing rather than after. Short answer: protect the date, cut the scope, and write down what you cut.';
+      typeThen(who, reply, 900);
+    }, 1100);
+    return;
+  }
+
+  const activeCh = $('.chan.active')?.dataset.ch || 'sprint-3';
+  const who = activeCh==='incidents' ? 'qa' : (/omar|stake|wallet|pivot|priorit|contradict/i.test(v) ? 'stake' : 'pm');
+  chatBusy=true;
+  showTyping(who);
+  try{
+    const reply = await agentSay(who, v, 200);
+    hideTyping(who);
+    postMsg(who, esc(reply).replace(/\n/g,'<br>'));
+  }catch(e){
+    hideTyping(who);
+    toast('warn','Message not delivered', PEOPLE[who].n+" didn't respond \u2014 connection issue. Try again.");
+  }finally{
+    chatBusy=false;
+  }
+}
+$('#chat-send').onclick=sendChat;
+$('#chat-in').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}
+});
+$('#chat-in').addEventListener('input',e=>{
+  e.target.style.height='auto'; e.target.style.height=Math.min(e.target.scrollHeight,110)+'px';
+});
+
+/* ═══════════════ ASYNC EVENT ENGINE ═══════════════ */
+function startEventClock(){
+  later(()=>fireEvent(), 15000);
+}
+async function fireEvent(){
+  if(S.eventIdx>=EVENT_ORDER.length) return;
+  const key=EVENT_ORDER[S.eventIdx++];
+  const E=EVENTS[key];
+
+  const runScripted=()=>{
+    const body=E[S.track];
+    typeThen(E.who, `<div class="callout ${E.kind}"><span class="k">${E.label}</span>${body}</div>`, 800);
+    toast(E.kind==='crit'?'crit':E.kind==='warn'?'warn':'info', E.label, E.toast);
+    ping(E.ch);
+    ledger(E.label+' · '+(key==='pivot'?'requirements changed':key==='incident'?'incident raised':'deadline warning'));
+    if(key==='incident'){
+      $('#con-badge').style.display='inline-block';
+      streamConsole([{lv:'ERR',m:'Regression detected · see #incidents'}],600);
+    }
+    if(key==='pivot') S.pivotFiredAt = Date.now();
+  };
+
+  if(S.T.live && (key==='pivot' || key==='incident')){
+    const who = key==='pivot' ? 'stake' : 'qa';
+    const instruction = key==='pivot'
+      ? "[SYSTEM EVENT \u2014 not visible to the user] The board call about going wallet-first for Egypt just ended. Announce this new direction to the #sprint-3 channel in your own voice, 1-3 sentences, as a real message the team will read. This is a change from Tuesday's call, but don't volunteer that you're being inconsistent unless directly challenged."
+      : "[SYSTEM EVENT \u2014 not visible to the user] Post a short, terse production regression alert for #incidents: checkout completion dropped on wallet-flagged Egypt sessions shortly after the wallet-first change went out. Include a rough percentage. 1-2 sentences, technical register, no pleasantries.";
+    try{
+      const body = await agentSay(who, instruction, 150);
+      if(key==='pivot') S.pivotFiredAt = Date.now();
+      typeThen(who, `<div class="callout ${E.kind}"><span class="k">${E.label}</span>${esc(body).replace(/\n/g,'<br>')}</div>`, 800);
+      toast(E.kind==='crit'?'crit':'warn', E.label, E.toast);
+      ping(E.ch);
+      ledger(E.label+' · '+(key==='pivot'?'requirements changed':'incident raised'));
+      if(key==='incident'){
+        $('#con-badge').style.display='inline-block';
+        streamConsole([{lv:'ERR',m:'Regression detected · see #incidents'}],600);
+      }
+    }catch(e){
+      ledger(E.label+' · (fallback — connection issue)');
+      runScripted();
+    }
+  } else {
+    runScripted();
+  }
+
+  if(S.eventIdx<EVENT_ORDER.length) later(()=>fireEvent(), 26000);
+}
+
+/* ═══════════════ SCREEN 4: GRADUATION ═══════════════ */
+function graduate(){
+  const T=S.T;
+  show('screen-grad');
+
+  let dims, overall, narrativeHTML, subLine;
+  if(T.live && S.finalScores){
+    const order=[['technical','Technical Precision'],['scope','Scope Management'],['communication','Communication'],['speed','Speed under Pressure']];
+    dims = order.map(([k,label])=>({n:label, s:(S.finalScores[k]&&S.finalScores[k].score)||60, note:(S.finalScores[k]&&S.finalScores[k].note)||''}));
+    overall = Math.round(dims.reduce((a,d)=>a+d.s,0)/dims.length);
+    narrativeHTML = S.finalNarrative || '<p>Record compiled. The closing note didn\'t come through this run — connection issue while generating it.</p>';
+    subLine = `${T.name} · Sprint 3 at Meridian · 1 ticket closed on revision ${S.revision}${S.pivotFiredAt?', through a live requirement pivot':''}.`;
+  } else {
+    dims = T.dims; overall = Math.round(T.dims.reduce((a,d)=>a+d.s,0)/T.dims.length);
+    narrativeHTML = T.narrative;
+    subLine = `${T.name} · Sprint 3 at Meridian · 1 ticket closed on revision 2, through one requirement change and one production incident.`;
+  }
+
+  $('#grad-sub').textContent = subLine;
+  $('#grad-overall').textContent='Overall '+overall;
+  $('#grad-lead').textContent=PEOPLE[T.reviewer].n;
+
+  $('#dims').innerHTML = dims.map(d=>{
+    const col = d.s>=80?'var(--green)' : d.s>=70?'var(--bronze)' : d.s>=60?'var(--amber)' : 'var(--red)';
+    return `<div class="dim">
+      <div class="dim-top"><b>${d.n}</b><span class="sc">${d.s}</span></div>
+      <div class="bar"><i data-w="${d.s}" style="background:${col}"></i></div>
+      <div class="note">${d.note}</div>
+    </div>`;
+  }).join('');
+  later(()=>$$('#dims .bar i').forEach(b=>b.style.width=b.dataset.w+'%'),120);
+
+  $('#narrative').innerHTML=narrativeHTML;
+
+  if(T.live){
+    renderLiveManifest();
+  } else {
+    $('#manifest').innerHTML = T.artifacts.map(a=>`
+      <div class="manifest">
+        <div class="ico">${a.k}</div>
+        <div class="mi"><b>${a.n}</b><span>${a.h}</span></div>
+        <span class="vf">✓ verified</span>
+      </div>`).join('');
+  }
+
+  $('#stele').innerHTML = S.ledger.map(l=>
+    `<div class="stele-row"><span class="t">${l.t}</span><span class="d">${l.d}</span></div>`).join('');
+}
+
+async function renderLiveManifest(){
+  const el=$('#manifest');
+  el.innerHTML = `<div class="manifest"><div class="ico">DOC</div><div class="mi"><b>Computing verification hash…</b><span></span></div></div>`;
+  try{
+    const docHash = await sha256Hex(S.lastSubmissionText || '');
+    const logHash = await sha256Hex(JSON.stringify(S.ledger));
+    const items = [
+      {n: S.T.ticket.id+'-prd-final.md', k:'PRD', h:'sha256:'+docHash.slice(0,8)+'…'+docHash.slice(-6)+' (real hash of your submitted text)'},
+      {n:'Review thread · '+S.revision+' revision'+(S.revision>1?'s':''), k:'LOG', h:'sha256:'+logHash.slice(0,8)+'…'+logHash.slice(-6)}
+    ];
+    el.innerHTML = items.map(a=>`
+      <div class="manifest">
+        <div class="ico">${a.k}</div>
+        <div class="mi"><b>${a.n}</b><span>${a.h}</span></div>
+        <span class="vf">✓ verified</span>
+      </div>`).join('');
+  }catch(e){
+    el.innerHTML = `<div class="manifest"><div class="ico">DOC</div><div class="mi"><b>Hash unavailable this run</b><span>crypto.subtle not reachable in this context</span></div></div>`;
+  }
+}
+
+$('#btn-restart').onclick=async ()=>{
+  clearTimers();
+  if(ACTIVE_SPRINT){
+    // Live mode: "run another track" really means "end today's work day."
+    clearInterval(timerPoll);
+    try{ await apiPost('/api/sprint/checkout', {}); }catch(e){}
+    location.href='/dashboard.html';
+    return;
+  }
+  // Preview mode: no account, no server call — just reset the scripted demo.
+  S={track:null,T:null,status:'BACKLOG',revision:1,submits:0,eventIdx:0,ledger:[],timers:[],accepted:false,
+     pivotFiredAt:null,lastReview:null,finalScores:null,finalNarrative:null,lastSubmissionText:'',priorFeedbackSummary:null};
+  $('#feed').innerHTML=''; $('#console').innerHTML=''; $('#deliv').value='';
+  $('#toasts').innerHTML='';
+  $('#view-backlog').style.display='block'; $('#view-active').style.display='none';
+  $('#btn-fill').textContent='Paste draft'; $('#btn-submit').disabled=false;
+  lockComposer(false);
+  $$('.chan').forEach(c=>c.classList.remove('has-ping'));
+  show('screen-select');
+};
+$('#btn-portfolio').onclick=()=>{
+  toast('good','Published','Your record is live at kleos.work/r/meridian-s3 and visible to hiring partners.');
+};
+
+// Mobile layout: the 3-column workspace collapses to one column under
+// 760px (see the media query above); this just toggles which column is
+// visible via the bottom tab bar. No-op on desktop — the media query is
+// what actually hides/shows anything, this only tracks which one "would"
+// be active if the viewport is narrow.
+function setupMobileTabs(){
+  const nav = document.getElementById('mobile-tabs');
+  if(!nav) return;
+  const panes = {
+    team: document.querySelector('.col-left'),
+    chat: document.querySelector('.col-mid'),
+    tickets: document.querySelector('.col-right')
+  };
+  function activate(key){
+    Object.entries(panes).forEach(([k,el])=>{ if(el) el.classList.toggle('mobile-on', k===key); });
+    [...nav.querySelectorAll('button')].forEach(b=>b.classList.toggle('active', b.dataset.tab===key));
+  }
+  [...nav.querySelectorAll('button')].forEach(b=>b.onclick=()=>activate(b.dataset.tab));
+  activate('chat');
+}
+setupMobileTabs();
+
+initGate();
+
+})();
+</script>
+</body>
+</html>

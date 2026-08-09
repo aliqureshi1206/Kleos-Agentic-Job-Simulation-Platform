@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kleos — Closing report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08090A;--panel:#111214;--panel-2:#17181B;--raised:#1C1D20;--line:rgba(255,255,255,.08);
+  --ink:#F7F8F8;--ink-2:#8A8F98;--ink-3:#62666D;--bronze:#D4A853;--bronze-dim:rgba(212,168,83,.4);
+  --red:#EB5757;--amber:#F2994A;--green:#4CB782;
+  --sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;
+  background:radial-gradient(ellipse 1100px 650px at 50% -10%, rgba(212,168,83,.07), transparent 60%), var(--bg);min-height:100%;
+  -webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;transition:all .15s var(--ease)}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.topbar{display:flex;align-items:center;padding:14px 26px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;letter-spacing:-.01em}
+.brand em{font-style:normal}
+.mark{width:22px;height:22px;border-radius:6px;background:var(--bronze);display:flex;align-items:center;justify-content:center;
+  color:#15100A;font-weight:700;font-size:11px}
+.spacer{flex:1}
+.back{background:var(--raised);color:var(--ink-2);padding:7px 12px;border-radius:7px;font-size:12px;text-decoration:none;border:1px solid var(--line)}
+.back:hover{background:var(--panel-2);color:var(--ink);border-color:var(--bronze-dim)}
+.wrap{max-width:820px;margin:0 auto;padding:56px 24px 90px;animation:fadeInUp .4s var(--ease)}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--bronze);text-align:center}
+h1{font-weight:700;font-size:clamp(26px,4vw,36px);text-align:center;line-height:1.2;margin:14px 0 12px;letter-spacing:-.02em}
+h1 em{font-style:normal;color:var(--bronze)}
+.sub{text-align:center;color:var(--ink-2);font-size:13.5px;max-width:520px;margin:0 auto 40px}
+.grid2{display:grid;grid-template-columns:1.1fr 1fr;gap:16px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;margin-bottom:16px;transition:border-color .2s var(--ease)}
+.card-h{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:16px}
+.card-h span:last-child{color:var(--bronze);font-size:17px;font-family:var(--sans);font-weight:700;letter-spacing:0;text-transform:none}
+.dim-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.dim-row:last-child{margin-bottom:0}
+.dim-name{width:120px;font-size:12.5px;color:var(--ink-2);flex-shrink:0}
+.dim-track{flex:1;height:6px;background:var(--raised);border-radius:3px;overflow:hidden}
+.dim-track i{display:block;height:100%;background:var(--bronze);border-radius:3px;transition:width 1s var(--ease)}
+.dim-score{width:34px;text-align:right;font-family:var(--mono);font-size:12.5px;color:var(--ink)}
+.narr{font-size:13.5px;color:var(--ink-2);line-height:1.7}
+.narr p{margin-bottom:10px}
+.narr p:last-child{margin-bottom:0}
+.narr strong{color:var(--ink)}
+.deed{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:var(--panel-2);transition:border-color .15s var(--ease)}
+.deed:hover{border-color:var(--border-hover,rgba(255,255,255,.16))}
+.deed:last-child{margin-bottom:0}
+.deed-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.deed-h b{font-size:13.5px;font-weight:600}
+.deed-h span{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.deed-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tag{font-size:10.5px;font-family:var(--mono);padding:3px 8px;border-radius:5px;background:var(--raised);color:var(--ink-3)}
+.tag.pivot{color:#FF9B9B;background:rgba(235,87,87,.1)}
+.empty{color:var(--ink-3);font-size:13px;text-align:center;padding:20px}
+.cta{display:flex;gap:12px;justify-content:center;margin-top:34px}
+.btn{padding:12px 22px;border-radius:8px;background:var(--bronze);color:#15100A;font-weight:600;font-size:13.5px}
+.btn:hover{background:#E2BA6C;transform:translateY(-1px);box-shadow:0 6px 16px rgba(212,168,83,.22)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn.ghost{background:var(--raised);color:var(--ink-2);font-weight:500;border:1px solid var(--line);text-decoration:none;display:inline-block}
+.btn.ghost:hover{background:var(--panel-2);color:var(--ink);box-shadow:none}
+.lede{color:var(--ink-2);font-size:13.5px}
+#share-slider::before{content:'';position:absolute;width:16px;height:16px;left:2px;top:2px;background:var(--ink-3);
+  border-radius:50%;transition:transform .15s var(--ease),background .15s var(--ease)}
+#toggle-share:checked + #share-slider{background:var(--bronze-dim);border-color:var(--bronze-dim)}
+#toggle-share:checked + #share-slider::before{transform:translateX(16px);background:var(--bronze)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand"><div class="mark">K</div>Kleos</div>
+  <div class="spacer"></div>
+  <a class="back" href="/dashboard.html">Back to dashboard</a>
+</div>
+
+<div class="wrap">
+  <div id="loading" class="lede" style="text-align:center;padding:60px 0">Loading…</div>
+  <div id="content" style="display:none">
+    <div class="eyebrow" id="eyebrow">Run closed</div>
+    <h1>The record of what you <em>actually did</em></h1>
+    <p class="sub" id="sub"></p>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-h"><span>Competency matrix</span><span id="overall">—</span></div>
+        <div id="dims"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><span>Manager's closing note</span><span></span></div>
+        <div class="narr" id="narrative"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><span>Witnessed deeds</span><span></span></div>
+      <div id="deeds"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><span>Public portfolio link</span><span></span></div>
+      <p class="sub" style="margin:0 0 14px;text-align:left">Share a read-only view of this report with anyone — no login required. Turning it off invalidates the link.</p>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <label class="switch" style="position:relative;width:38px;height:22px;flex:0 0 auto">
+          <input type="checkbox" id="toggle-share" style="opacity:0;width:0;height:0">
+          <span id="share-slider" style="position:absolute;inset:0;background:var(--raised);border:1px solid var(--line);
+            border-radius:22px;transition:background .15s;cursor:pointer"></span>
+        </label>
+        <input id="share-url" readonly style="flex:1;min-width:200px;background:var(--panel-2);border:1px solid var(--line);
+          border-radius:7px;padding:9px 11px;color:var(--ink-2);font-family:var(--mono);font-size:11.5px" placeholder="Sharing is off">
+        <button class="btn ghost" id="btn-copy-link" style="width:auto;padding:9px 14px;margin:0;display:none">Copy link</button>
+      </div>
+      <div class="empty hidden" id="share-msg" style="padding:10px 0 0;text-align:left"></div>
+    </div>
+
+    <div class="cta">
+      <a class="btn ghost" href="/dashboard.html">Start a new job</a>
+    </div>
+  </div>
+  <div id="error" class="empty" style="display:none"></div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const DIM_LABELS = { technical: 'Technical', scope: 'Scope', communication: 'Communication', speed: 'Speed' };
+
+function csrfToken() {
+  const m = document.cookie.match(/(?:^|; )kleos\.csrf=([^;]*)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
+async function api(url, opts) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (opts && opts.method && opts.method !== 'GET') headers['X-CSRF-Token'] = csrfToken();
+  const res = await fetch(url, { headers, ...opts });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+function renderShareState(share) {
+  $('#toggle-share').checked = !!share.enabled;
+  $('#share-url').value = share.enabled ? (location.origin + share.url) : '';
+  $('#share-url').placeholder = share.enabled ? '' : 'Sharing is off';
+  $('#btn-copy-link').style.display = share.enabled ? 'inline-block' : 'none';
+}
+
+async function setupShare() {
+  try {
+    const share = await api('/api/sprint/share');
+    renderShareState(share);
+  } catch (e) { /* report might not exist yet — toggle just stays off */ }
+
+  $('#toggle-share').addEventListener('change', async () => {
+    const msg = $('#share-msg');
+    msg.classList.add('hidden');
+    try {
+      const share = await api('/api/sprint/share', { method: 'POST', body: JSON.stringify({ enabled: $('#toggle-share').checked }) });
+      renderShareState(share);
+    } catch (e) {
+      msg.textContent = e.message;
+      msg.classList.remove('hidden');
+      $('#toggle-share').checked = !$('#toggle-share').checked;
+    }
+  });
+
+  $('#btn-copy-link').addEventListener('click', () => {
+    $('#share-url').select();
+    navigator.clipboard && navigator.clipboard.writeText($('#share-url').value).catch(() => {});
+    $('#btn-copy-link').textContent = 'Copied';
+    setTimeout(() => { $('#btn-copy-link').textContent = 'Copy link'; }, 1500);
+  });
+}
+
+function renderDims(averages) {
+  const rows = Object.keys(DIM_LABELS).map(key => {
+    const val = averages[key];
+    const pct = val === null || val === undefined ? 0 : val;
+    return `<div class="dim-row">
+      <div class="dim-name">${DIM_LABELS[key]}</div>
+      <div class="dim-track"><i style="width:${pct}%"></i></div>
+      <div class="dim-score">${val === null || val === undefined ? '—' : val}</div>
+    </div>`;
+  }).join('');
+  $('#dims').innerHTML = rows;
+}
+
+function renderDeeds(tickets) {
+  if (!tickets.length) {
+    $('#deeds').innerHTML = '<div class="empty">No tickets were completed this run.</div>';
+    return;
+  }
+  $('#deeds').innerHTML = tickets.map(t => `
+    <div class="deed">
+      <div class="deed-h"><b>${t.title}</b><span>${t.id}</span></div>
+      <div class="deed-tags">
+        <span class="tag">${t.revisions} revision${t.revisions > 1 ? 's' : ''}</span>
+        ${t.pivotFired ? '<span class="tag pivot">survived a pivot</span>' : ''}
+      </div>
+    </div>`).join('');
+}
+
+async function boot() {
+  let me;
+  try { me = await api('/api/auth/me'); } catch (e) { location.href = '/login.html'; return; }
+  if (!me.user) { location.href = '/login.html'; return; }
+
+  try {
+    const { report, sprint } = await api('/api/sprint/report');
+    $('#sub').textContent = `${sprint.duration.toUpperCase()} run · ${sprint.totalWorkDays} work days · ${report.totalTickets} ticket${report.totalTickets === 1 ? '' : 's'} completed`;
+    $('#overall').textContent = report.overall === null ? '—' : 'Overall ' + report.overall;
+    renderDims(report.averages);
+    $('#narrative').innerHTML = report.narrative;
+    renderDeeds(report.tickets);
+    $('#loading').style.display = 'none';
+    $('#content').style.display = 'block';
+    await setupShare();
+  } catch (e) {
+    $('#loading').style.display = 'none';
+    $('#error').style.display = 'block';
+    $('#error').textContent = e.message === 'No completed run yet.'
+      ? "You haven't finished a run yet — this page fills in once you complete one."
+      : e.message;
+  }
+}
+
+boot();
+</script>
+</body>
+</html>

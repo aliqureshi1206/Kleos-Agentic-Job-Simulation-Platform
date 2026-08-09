@@ -1,0 +1,21 @@
+{
+  "name": "kleos-app",
+  "version": "2.0.0",
+  "description": "Kleos — a live workplace simulator with independent AI agents (PM, stakeholder, QA, reviewer) that read what you actually write and respond in character. Real accounts, real work-day calendar, real Postgres persistence.",
+  "main": "server.js",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-pg-simple": "^9.0.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^7.4.1",
+    "express-session": "^1.18.1",
+    "pg": "^8.13.1"
+  }
+}

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kleos — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08090A;--surface:#111214;--surface-2:#17181B;--surface-hover:#1C1D20;
+  --border:rgba(255,255,255,.08);--border-hover:rgba(255,255,255,.16);--border-strong:rgba(255,255,255,.2);
+  --text:#F7F8F8;--text-2:#8A8F98;--text-3:#62666D;
+  --accent:#D4A853;--accent-hover:#E2BA6C;--accent-dim:rgba(212,168,83,.14);--accent-ink:#15100A;
+  --danger:#EB5757;--danger-dim:rgba(235,87,87,.12);
+  --amber:#F2994A;--green:#4CB782;
+  --sans:'Inter',system-ui,-apple-system,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.4,0,.2,1);--radius:8px;--radius-lg:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:
+    radial-gradient(ellipse 1000px 600px at 50% -15%, rgba(212,168,83,.06), transparent 60%),
+    var(--bg);
+  color:var(--text);font-family:var(--sans);font-size:14px;-webkit-font-smoothing:antialiased;min-height:100%
+}
+button{font-family:inherit;cursor:pointer;border:none;transition:all .15s var(--ease)}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.topbar{display:flex;align-items:center;padding:14px 28px;border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;letter-spacing:-.01em}
+.mark{width:22px;height:22px;border-radius:6px;background:var(--accent);display:flex;align-items:center;justify-content:center;
+  color:var(--accent-ink);font-weight:700;font-size:11px}
+.spacer{flex:1}
+.me{font-size:12.5px;color:var(--text-2);margin-right:16px}
+.logout{background:var(--surface-2);color:var(--text-2);padding:7px 13px;border-radius:var(--radius);font-size:12px;border:1px solid var(--border)}
+.logout:hover{background:var(--surface-hover);color:var(--text);border-color:var(--border-hover)}
+.wrap{max-width:640px;margin:0 auto;padding:52px 24px;animation:fadeInUp .4s var(--ease)}
+h1{font-size:24px;font-weight:600;letter-spacing:-.01em;margin-bottom:6px}
+.lede{color:var(--text-2);font-size:13.5px;margin-bottom:32px;line-height:1.5}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;margin-bottom:16px;
+  transition:border-color .2s var(--ease)}
+.label{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:12px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:22px}
+.opt{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:13px;text-align:left;
+  transition:all .15s var(--ease)}
+.opt:hover:not(.disabled){border-color:var(--border-hover);background:var(--surface-hover);transform:translateY(-1px)}
+.opt.sel{border-color:var(--accent);background:var(--accent-dim)}
+.opt.sel:hover{transform:none}
+.opt.disabled{opacity:.4;cursor:not-allowed}
+.opt b{display:block;font-size:13px;font-weight:500;margin-bottom:4px}
+.opt span{font-size:11.5px;color:var(--text-2);line-height:1.4}
+.btn{width:100%;padding:12px;border-radius:var(--radius);background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:13.5px}
+.btn:hover{background:var(--accent-hover);transform:translateY(-1px);box-shadow:0 6px 16px rgba(212,168,83,.2)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn.ghost{background:var(--surface-2);color:var(--text-2);font-weight:500;border:1px solid var(--border)}
+.btn.ghost:hover{background:var(--surface-hover);color:var(--text);box-shadow:none}
+.btn.danger{background:transparent;border:1px solid rgba(235,87,87,.35);color:#FF9B9B}
+.btn.danger:hover{background:var(--danger-dim);transform:none;box-shadow:none}
+.row{display:flex;gap:10px}
+.status-line{display:flex;align-items:center;gap:10px;margin-bottom:18px;font-size:13.5px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex:0 0 auto}
+.dot.amber{background:var(--amber)}
+.dot.grey{background:var(--text-3)}
+.timer{font-family:var(--mono);font-weight:500;font-size:32px;text-align:center;margin:6px 0 4px;letter-spacing:-.02em}
+.timer.over{color:var(--danger)}
+.timer-note{text-align:center;color:var(--text-3);font-size:11px;margin-bottom:22px;font-family:var(--mono);letter-spacing:.06em}
+.progress-track{height:4px;background:var(--surface-2);border-radius:3px;overflow:hidden;margin:10px 0 6px}
+.progress-track i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .3s var(--ease)}
+.day-note{font-size:11.5px;color:var(--text-3);font-family:var(--mono)}
+.msg{font-size:13px;color:var(--text-2);line-height:1.6;padding:13px 14px;background:var(--surface-2);border-radius:var(--radius);
+  border:1px solid var(--border);margin-bottom:18px}
+.hidden{display:none}
+.err{background:var(--danger-dim);border:1px solid rgba(235,87,87,.3);color:#FF9B9B;font-size:12.5px;
+  padding:10px 12px;border-radius:var(--radius);margin-bottom:16px}
+.banner{display:flex;align-items:center;gap:14px;background:var(--accent-dim);border-bottom:1px solid rgba(212,168,83,.25);
+  color:var(--accent);font-size:12.5px;padding:11px 26px;animation:fadeInUp .3s var(--ease)}
+.banner.ok{background:rgba(76,183,130,.1);border-bottom:1px solid rgba(76,183,130,.25);color:#7FE0AB}
+.banner span{flex:1}
+.banner button{background:transparent;border:1px solid currentColor;color:inherit;padding:5px 11px;border-radius:6px;font-size:11.5px}
+.banner button:hover{background:rgba(255,255,255,.08)}
+.banner button:disabled{opacity:.5;cursor:not-allowed}
+.banner .x{border:none;padding:2px 6px;font-size:14px;opacity:.7}
+.banner .x:hover{opacity:1;background:transparent}
+</style>
+</head>
+<body>
+<div class="banner hidden" id="verify-banner">
+  <span id="verify-banner-text">Verify your email to start a job — check your inbox for the link.</span>
+  <button id="btn-resend">Resend email</button>
+  <button class="x" id="btn-dismiss-banner">✕</button>
+</div>
+
+<div class="topbar">
+  <div class="brand"><div class="mark">K</div>Kleos</div>
+  <div class="spacer"></div>
+  <a class="logout hidden" id="admin-link" href="/admin.html" style="text-decoration:none;margin-right:8px">Admin</a>
+  <a class="logout" href="/settings.html" style="text-decoration:none;margin-right:8px">Settings</a>
+  <div class="me" id="me"></div>
+  <button class="logout" id="logout">Sign out</button>
+</div>
+
+<div class="wrap">
+  <div id="loading" class="lede">Loading…</div>
+
+  <!-- ═══ NO ACTIVE SPRINT: role / duration / pace picker ═══ -->
+  <div id="view-new" class="hidden">
+    <h1>Start your job</h1>
+    <p class="lede">Pick the role you want to work, how long the job runs, and how you want the calendar to behave.</p>
+
+    <div class="card">
+      <div class="label">Role</div>
+      <div class="grid3" id="role-opts"></div>
+
+      <div class="label">Duration</div>
+      <div class="grid3" id="duration-opts"></div>
+
+      <div class="label">Pace</div>
+      <div class="grid3" id="pace-opts" style="grid-template-columns:1fr 1fr"></div>
+
+      <div class="err hidden" id="new-err"></div>
+      <button class="btn" id="btn-start">Start job</button>
+    </div>
+  </div>
+
+  <!-- ═══ ACTIVE SPRINT ═══ -->
+  <div id="view-active" class="hidden">
+    <h1 id="active-title">Your job</h1>
+    <p class="lede" id="active-lede"></p>
+
+    <div class="card" id="checkedout-card">
+      <div class="status-line"><span class="dot grey"></span><span id="status-text">Checked out</span></div>
+      <div class="day-note" id="day-note"></div>
+      <div class="progress-track"><i id="day-bar" style="width:0%"></i></div>
+      <div class="msg hidden" id="elig-msg"></div>
+      <div class="err hidden" id="checkin-err"></div>
+      <button class="btn" id="btn-checkin">Check in</button>
+    </div>
+
+    <div class="card hidden" id="checkedin-card">
+      <div class="status-line"><span class="dot amber" id="ci-dot"></span><span>Checked in · Day <span id="ci-day"></span> of <span id="ci-total"></span></span></div>
+      <div class="timer" id="ci-timer">4:00:00</div>
+      <div class="timer-note" id="ci-note">HOURS REMAINING IN WORK DAY</div>
+      <div class="row">
+        <button class="btn" id="btn-enter">Enter workspace</button>
+        <button class="btn danger" id="btn-checkout" style="width:auto;padding:12px 18px">Check out</button>
+      </div>
+    </div>
+
+    <div class="card hidden" id="completed-card">
+      <div class="status-line"><span class="dot" style="background:var(--green)"></span><span>Job complete</span></div>
+      <p class="lede" style="margin:0 0 18px">You worked all <span id="done-total"></span> days of this run. Start a new track whenever you're ready.</p>
+      <div class="row">
+        <a class="btn" href="/report.html" style="text-align:center;text-decoration:none">View closing report</a>
+        <button class="btn ghost" id="btn-restart" style="width:auto;padding:12px 18px">Start a new job</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+
+const ROLES = [
+  { key: 'pm', name: 'Product Management', live: true, desc: 'Turn a contradictory stakeholder call into a real PRD.' },
+  { key: 'design', name: 'UI/UX Design', live: true, desc: 'Spec an RTL checkout redesign a reviewer can actually implement from.' },
+  { key: 'fe', name: 'Frontend Engineering', live: true, desc: 'Get checkout usable on 3G without breaking the payment path.' }
+];
+const DURATIONS = [
+  { key: '2w', name: '2 weeks', desc: '10 work days' },
+  { key: '1m', name: '1 month', desc: '22 work days' },
+  { key: '3m', name: '3 months', desc: '66 work days' }
+];
+const PACE = [
+  { key: 'calendar', name: 'Real calendar', desc: 'One work day per real business day. Weekends off, just like a real job.' },
+  { key: 'self_paced', name: 'Self-paced', desc: 'Same total work days, but check in again immediately after checking out.' }
+];
+
+let picked = { track: 'pm', duration: '2w', paceMode: 'calendar' };
+let statusPollTimer = null;
+
+function fmtHMS(totalSeconds) {
+  const neg = totalSeconds < 0;
+  const s = Math.abs(totalSeconds);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  const str = [h, m, sec].map(n => String(n).padStart(2, '0')).join(':');
+  return (neg ? '+' : '') + str;
+}
+
+function csrfToken() {
+  const m = document.cookie.match(/(?:^|; )kleos\.csrf=([^;]*)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
+async function api(url, opts) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (opts && opts.method && opts.method !== 'GET') headers['X-CSRF-Token'] = csrfToken();
+  const res = await fetch(url, { headers, ...opts });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+function renderOpts(container, items, key, disabledCheck) {
+  container.innerHTML = items.map(it => `
+    <button class="opt ${picked[key] === it.key ? 'sel' : ''} ${disabledCheck && disabledCheck(it) ? 'disabled' : ''}" data-val="${it.key}">
+      <b>${it.name}</b><span>${it.desc}</span>
+    </button>`).join('');
+  [...container.querySelectorAll('.opt')].forEach((el, i) => {
+    if (disabledCheck && disabledCheck(items[i])) return;
+    el.onclick = () => { picked[key] = items[i].key; renderPicker(); };
+  });
+}
+
+function renderPicker() {
+  renderOpts($('#role-opts'), ROLES.map(r => ({ key: r.key, name: r.name, desc: r.live ? r.desc : 'Coming soon' })), 'track', r => !ROLES.find(x => x.key === r.key).live);
+  renderOpts($('#duration-opts'), DURATIONS, 'duration');
+  renderOpts($('#pace-opts'), PACE, 'paceMode');
+}
+
+async function boot() {
+  let me;
+  try { me = await api('/api/auth/me'); } catch (e) { location.href = '/login.html'; return; }
+  if (!me.user) { location.href = '/login.html'; return; }
+  $('#me').textContent = me.user.email;
+  if (me.user.isAdmin) $('#admin-link').classList.remove('hidden');
+
+  $('#logout').onclick = async () => { await api('/api/auth/logout', { method: 'POST' }); location.href = '/login.html'; };
+
+  setupVerifyBanner(me.user);
+  await refresh();
+  $('#loading').classList.add('hidden');
+}
+
+function setupVerifyBanner(user) {
+  const banner = $('#verify-banner');
+  const params = new URLSearchParams(location.search);
+  const justVerified = params.get('verify') === 'ok';
+
+  if (justVerified) {
+    banner.classList.remove('hidden');
+    banner.classList.add('ok');
+    $('#verify-banner-text').textContent = "Email verified. You're all set.";
+    $('#btn-resend').style.display = 'none';
+    history.replaceState({}, '', location.pathname);
+    setTimeout(() => banner.classList.add('hidden'), 5000);
+    return;
+  }
+
+  if (user.emailVerified) return;
+
+  banner.classList.remove('hidden');
+  $('#btn-dismiss-banner').onclick = () => banner.classList.add('hidden');
+  $('#btn-resend').onclick = async () => {
+    const btn = $('#btn-resend');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      await api('/api/auth/resend-verification', { method: 'POST' });
+      btn.textContent = 'Sent — check your inbox';
+    } catch (e) {
+      btn.textContent = 'Could not send — try again';
+      btn.disabled = false;
+    }
+  };
+}
+
+async function refresh() {
+  const { sprint, status } = await api('/api/sprint/current');
+  clearInterval(statusPollTimer);
+
+  if (!sprint) {
+    $('#view-new').classList.remove('hidden');
+    $('#view-active').classList.add('hidden');
+    renderPicker();
+    return;
+  }
+  $('#view-new').classList.add('hidden');
+  $('#view-active').classList.remove('hidden');
+
+  const roleName = ROLES.find(r => r.key === sprint.track)?.name || sprint.track;
+  $('#active-title').textContent = roleName;
+  $('#active-lede').textContent = `${sprint.duration.toUpperCase()} run · ${sprint.pace_mode === 'calendar' ? 'real calendar pace' : 'self-paced'}`;
+
+  $('#checkedout-card').classList.add('hidden');
+  $('#checkedin-card').classList.add('hidden');
+  $('#completed-card').classList.add('hidden');
+
+  if (status.completed) {
+    $('#completed-card').classList.remove('hidden');
+    $('#done-total').textContent = status.totalWorkDays;
+    return;
+  }
+
+  if (status.checkedIn) {
+    $('#checkedin-card').classList.remove('hidden');
+    $('#ci-day').textContent = status.dayIndex + 1;
+    $('#ci-total').textContent = status.totalWorkDays;
+    updateTimer(status);
+    statusPollTimer = setInterval(async () => {
+      const r = await api('/api/sprint/status');
+      if (!r.status.checkedIn) { await refresh(); return; }
+      updateTimer(r.status);
+    }, 5000);
+  } else {
+    $('#checkedout-card').classList.remove('hidden');
+    $('#day-note').textContent = `Day ${status.dayIndex + 1} of ${status.totalWorkDays}`;
+    $('#day-bar').style.width = Math.round((status.dayIndex / status.totalWorkDays) * 100) + '%';
+
+    const elig = status.eligibility;
+    const btn = $('#btn-checkin');
+    const msg = $('#elig-msg');
+    if (elig && !elig.eligible) {
+      btn.disabled = true;
+      msg.classList.remove('hidden');
+      if (elig.reason === 'weekend') {
+        msg.textContent = `It's the weekend. Next work day: ${elig.nextAvailable.slice ? elig.nextAvailable.slice(0, 10) : elig.nextAvailable}.`;
+      } else if (elig.reason === 'holiday') {
+        msg.textContent = `It's a company holiday. Next work day: ${elig.nextAvailable.slice ? elig.nextAvailable.slice(0, 10) : elig.nextAvailable}.`;
+      } else if (elig.reason === 'already_worked_today') {
+        msg.textContent = `You've already worked today. Come back ${elig.nextAvailable.slice ? elig.nextAvailable.slice(0, 10) : elig.nextAvailable}.`;
+      } else {
+        msg.textContent = 'Not eligible to check in right now.';
+      }
+      $('#status-text').textContent = 'Waiting for next work day';
+    } else {
+      btn.disabled = false;
+      msg.classList.add('hidden');
+      $('#status-text').textContent = 'Ready to check in';
+    }
+  }
+}
+
+function updateTimer(status) {
+  const el = $('#ci-timer');
+  el.textContent = fmtHMS(status.remainingSeconds);
+  el.classList.toggle('over', status.overtime);
+  $('#ci-note').textContent = status.overtime ? 'OVERTIME' : 'HOURS REMAINING IN WORK DAY';
+  $('#ci-dot').className = 'dot ' + (status.overtime ? 'amber' : '');
+}
+
+$('#btn-start').onclick = async () => {
+  const err = $('#new-err');
+  err.classList.add('hidden');
+  try {
+    await api('/api/sprint', { method: 'POST', body: JSON.stringify(picked) });
+    await refresh();
+  } catch (e) {
+    err.textContent = e.message;
+    err.classList.remove('hidden');
+  }
+};
+
+$('#btn-checkin').onclick = async () => {
+  const err = $('#checkin-err');
+  err.classList.add('hidden');
+  try {
+    await api('/api/sprint/checkin', { method: 'POST' });
+    location.href = '/index.html';
+  } catch (e) {
+    err.textContent = e.message;
+    err.classList.remove('hidden');
+    await refresh();
+  }
+};
+
+$('#btn-enter').onclick = () => { location.href = '/index.html'; };
+
+$('#btn-checkout').onclick = async () => {
+  await api('/api/sprint/checkout', { method: 'POST' });
+  await refresh();
+};
+
+$('#btn-restart').onclick = () => {
+  // Completed sprints stay in the database as history — starting a new job
+  // just switches the picker view; POST /api/sprint creates a fresh row
+  // once the user actually confirms their choices below.
+  $('#view-active').classList.add('hidden');
+  $('#view-new').classList.remove('hidden');
+  renderPicker();
+};
+
+boot();
+</script>
+</body>
+</html>

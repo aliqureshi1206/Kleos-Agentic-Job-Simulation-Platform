@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kleos — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08090A;--panel:#111214;--panel-2:#17181B;--raised:#1C1D20;--line:rgba(255,255,255,.08);
+  --ink:#F7F8F8;--ink-2:#8A8F98;--ink-3:#62666D;--bronze:#D4A853;--bronze-dim:rgba(212,168,83,.4);
+  --red:#EB5757;--amber:#F2994A;--green:#4CB782;
+  --sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:13.5px;
+  background:radial-gradient(ellipse 1100px 650px at 50% -10%, rgba(212,168,83,.06), transparent 60%), var(--bg);min-height:100%;
+  -webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;transition:all .15s var(--ease)}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.topbar{display:flex;align-items:center;padding:14px 26px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;letter-spacing:-.01em}
+.brand em{font-style:normal}
+.mark{width:22px;height:22px;border-radius:6px;background:var(--bronze);display:flex;align-items:center;justify-content:center;
+  color:#15100A;font-weight:700;font-size:11px}
+.spacer{flex:1}
+.back{background:var(--raised);color:var(--ink-2);padding:7px 12px;border-radius:7px;font-size:12px;text-decoration:none;border:1px solid var(--line)}
+.back:hover{background:var(--panel-2);color:var(--ink);border-color:var(--bronze-dim)}
+.wrap{max-width:1080px;margin:0 auto;padding:36px 24px 80px;animation:fadeInUp .4s var(--ease)}
+h1{font-size:22px;font-weight:600;margin-bottom:22px;letter-spacing:-.01em}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:26px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;transition:border-color .15s var(--ease)}
+.stat:hover{border-color:var(--bronze-dim)}
+.stat b{display:block;font-weight:700;font-size:24px;color:var(--bronze);font-family:var(--mono)}
+.stat span{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);font-size:12.5px}
+th{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);background:var(--panel-2)}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background .12s var(--ease)}
+tbody tr:hover{background:var(--panel-2)}
+.pill{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-family:var(--mono)}
+.pill.ok{background:rgba(76,183,130,.12);color:#7FE0AB}
+.pill.no{background:rgba(235,87,87,.1);color:#FF9B9B}
+.pill.grey{background:var(--raised);color:var(--ink-3)}
+.pill.amber{background:rgba(242,153,74,.12);color:var(--amber)}
+.muted{color:var(--ink-3)}
+.err{background:rgba(235,87,87,.1);border:1px solid rgba(235,87,87,.3);color:#FF9B9B;font-size:12.5px;padding:9px 11px;border-radius:8px}
+.tablewrap{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand"><div class="mark">K</div>Kleos <span style="color:var(--ink-3);font-family:var(--mono);font-size:11px;letter-spacing:.08em;margin-left:2px">ADMIN</span></div>
+  <div class="spacer"></div>
+  <a class="back" href="/dashboard.html">Back to dashboard</a>
+</div>
+
+<div class="wrap">
+  <div id="loading" class="muted">Loading…</div>
+  <div id="body" style="display:none">
+    <h1>Users &amp; runs</h1>
+    <div class="stats" id="stats"></div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Email</th><th>Verified</th><th>Admin</th><th>Role</th><th>Duration</th>
+            <th>Pace</th><th>Progress</th><th>Status</th><th>Checked in</th><th>Joined</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="error" class="err" style="display:none"></div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+
+async function api(url) {
+  const res = await fetch(url);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+function pill(text, cls) { return `<span class="pill ${cls}">${text}</span>`; }
+function fmtDate(s) { return s ? new Date(s).toISOString().slice(0, 10) : '—'; }
+
+async function boot() {
+  let me;
+  try { me = await api('/api/auth/me'); } catch (e) { location.href = '/login.html'; return; }
+  if (!me.user) { location.href = '/login.html'; return; }
+  if (!me.user.isAdmin) {
+    $('#loading').style.display = 'none';
+    $('#error').style.display = 'block';
+    $('#error').textContent = "This page is admin-only.";
+    return;
+  }
+
+  try {
+    const [{ users }, stats] = await Promise.all([
+      api('/api/admin/users'),
+      api('/api/admin/stats')
+    ]);
+
+    $('#stats').innerHTML = `
+      <div class="stat"><b>${stats.totalUsers}</b><span>Total users</span></div>
+      <div class="stat"><b>${stats.verifiedUsers}</b><span>Verified</span></div>
+      <div class="stat"><b>${stats.totalSprints}</b><span>Runs started</span></div>
+      <div class="stat"><b>${stats.completedSprints}</b><span>Runs completed</span></div>
+      <div class="stat"><b>${stats.checkedInNow}</b><span>Checked in now</span></div>`;
+
+    $('#rows').innerHTML = users.map(u => `
+      <tr>
+        <td>${u.email}</td>
+        <td>${u.email_verified ? pill('yes', 'ok') : pill('no', 'no')}</td>
+        <td>${u.is_admin ? pill('admin', 'amber') : '<span class="muted">—</span>'}</td>
+        <td>${u.track ? u.track.toUpperCase() : '<span class="muted">no run</span>'}</td>
+        <td>${u.duration || '—'}</td>
+        <td>${u.pace_mode || '—'}</td>
+        <td>${u.track ? `${u.day_index}/${u.total_work_days}` : '—'}</td>
+        <td>${u.sprint_status ? pill(u.sprint_status, u.sprint_status === 'completed' ? 'ok' : 'grey') : '—'}</td>
+        <td>${u.checked_in_at ? pill('checked in', 'amber') : '<span class="muted">no</span>'}</td>
+        <td>${fmtDate(u.created_at)}</td>
+      </tr>`).join('');
+
+    $('#loading').style.display = 'none';
+    $('#body').style.display = 'block';
+  } catch (e) {
+    $('#loading').style.display = 'none';
+    $('#error').style.display = 'block';
+    $('#error').textContent = e.message;
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
